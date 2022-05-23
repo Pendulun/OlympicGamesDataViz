@@ -21,8 +21,12 @@ def treatRegions():
 
 def treatAthletes():
     athletesDf = pd.read_csv(Config.ATHLETES_FILE_PATH)
+    #.
+    #.
+    #.
+    athletesDf.to_csv(Config.CLEANED_ATHLETES_FILE_PATH)
 
 if __name__ == "__main__":
     Config.CLEANED_DATASET_DIR_PATH.mkdir(parents=True, exist_ok=True)
     treatRegions()
-    #treatAthletes()
+    treatAthletes()
