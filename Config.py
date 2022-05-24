@@ -5,9 +5,9 @@ class Config():
     This class holds constants along the project like numbers and paths
     Tutorial on pathlib: https://realpython.com/python-pathlib/
     """
-    ORIGINAL_DATASET_DIR_PATH = Path("./originalDataset")
-    ATHLETES_FILE_PATH = ORIGINAL_DATASET_DIR_PATH / "athlete_events.csv"
-    REGIONS_FILE_PATH = ORIGINAL_DATASET_DIR_PATH / "noc_regions.csv"
-    CLEANED_DATASET_DIR_PATH = Path("./cleanedDataSet")
-    CLEANED_ATHLETES_FILE_PATH = CLEANED_DATASET_DIR_PATH / "cleaned_athlete_events.csv" 
-    CLEANED_REGIONS_FILE_PATH = CLEANED_DATASET_DIR_PATH / "cleaned_noc_regions.csv"
+    ORIGINAL_DATASET_DIR_NAME = 'originalDataset'
+    ATHLETES_FILE_NAME = "athlete_events.csv"
+    REGIONS_FILE_NAME = "noc_regions.csv"
+    CLEANED_DATASET_DIR_NAME = 'cleanedDataSet'
+    CLEANED_ATHLETES_FILE_NAME = "cleaned_athlete_events.csv" 
+    CLEANED_REGIONS_FILE_NAME = "cleaned_noc_regions.csv"
