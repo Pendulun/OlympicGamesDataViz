@@ -1,4 +1,10 @@
 from dash import Dash, html, dcc
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '../')
+
+from Config import Config
+from OlympicGraphs import OlympicGRaphs
 import plotly.express as px
 import pandas as pd
 
@@ -38,14 +44,41 @@ headerDiv = html.Div(
                     }
                 ),
             ], 
-            style=  {
+            style = {
                     'backgroundColor': olympicsPalette['bege']
                     }
             )
 
+cleanedAthletesFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_ATHLETES_FILE_NAME
+cleanedRegionsFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_REGIONS_FILE_NAME
+myGraphs = OlympicGRaphs(cleanedAthletesFilePath, cleanedRegionsFilePath)
+
+mainBodyDiv = html.Div(children=[
+                            html.Div(
+                                [
+                                    html.H4('Altura x Peso',
+                                        style={
+                                        'textAlign': 'center'}
+                                    ),
+                                    myGraphs.getGraficoExemplo(),
+                                    html.P(
+                                        """
+                                            Esse gráfico tem alguns problemas ainda. O principal é que, se um mesmo atleta ganhou várias medalhas, 
+                                            os seus pontos ficarão um em cima do outro e, ao passar o mouse, pode não fazer muito sentido o que é 
+                                            mostrado como informação do ponto. Entretanto, já serve de base de fluxo de desenvolvimento do gráfico no código.
+                                            Além disso, pode ser interessante plotar em partes, por exemplo, primeiro apenas só aqueles que não ganharam medalhas.
+                                            Depois, apenas aqueles que ganharam bronze. Depois prata e, por fim, ouro. Dessa forma, poderíamos ver melhor o que importa.
+                                        """
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+
 app.layout = html.Div(
     children=[
         headerDiv,
+        mainBodyDiv
     ]
 )
 
