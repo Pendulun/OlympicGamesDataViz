@@ -1,8 +1,10 @@
 import pandas as pd
 import plotly.express as px
-from dash import dcc
+from dash import Dash, dcc, html, Input, Output
+import numpy as np
 
-class OlympicGRaphs():
+class OlympicGraphs():
+
     def __init__(self, athletesFilePath:str, regionsFilePath:str):
         self._athletesFilePath = athletesFilePath
         self._athletesDf = pd.read_csv(self._athletesFilePath)
@@ -37,3 +39,102 @@ class OlympicGRaphs():
         )
 
         return grafico
+
+    def graph1(self, app):
+        """
+        Esse é um gráfico com as seguintes características:
+        Eixo x: Altura
+        Eixo y: Peso
+        Filtros:
+            Dropdown: Tipo de Esporte
+            RangeSlider: Faixa de tempo
+        """
+
+        #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
+
+        def getGraphFigWith(sportType, minTime, maxTime):
+            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
+            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+            athletesWithMedalOnTimeRange = athletesWithMedal[
+                    (athletesWithMedal['Year'] >= minTime) & (athletesWithMedal['Year'] <= maxTime)
+                ]
+
+            fig = px.scatter(athletesWithMedalOnTimeRange, x="Height", y="Weight", hover_name="Name",
+                                color='Medal',
+                                #Para cada valor diferente na coluna Medal, eu defino uma cor hex para a bolinha
+                                color_discrete_map={ 
+                                    'Bronze':'#96642f',
+                                    'Gold':'#f5dd05',
+                                    'Silver':'#98c5f5'
+                                    })
+            
+            return fig
+
+        #Como recebi o app criado em app.py por parâmetro, posso adicionar callbacks a ele
+
+        @app.callback(
+            Output('graph1','figure'),
+            Input('graph1SportsDropdown','value'),
+            Input('graph1Slider','value')
+        )
+        def updateGraph1(sportType, timeRange):
+
+            fig = getGraphFigWith(sportType, timeRange[0], timeRange[1])
+
+            return fig
+        
+        @app.callback(
+                Output('graph1Slider','min'),
+                Output('graph1Slider','max'),
+                Output('graph1Slider','value'),
+                Input('graph1SportsDropdown','value')
+        )
+        def updateGraph1Slider(sportType):
+            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
+            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+            yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+            minYear = np.min(yearsOfMedalists)
+            maxYear = np.max(yearsOfMedalists)
+            value = [minYear, maxYear]
+            return minYear, maxYear, value 
+
+        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
+            
+        defaultSportType ='Football'
+        athletesOfSport = self._athletesDf[self._athletesDf['Sport']==defaultSportType]
+        athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+        athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+        yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+        minYear = np.min(yearsOfMedalists)
+        maxYear = np.max(yearsOfMedalists)
+        
+        fig = getGraphFigWith(defaultSportType, minYear, maxYear)
+        grafico = dcc.Graph(
+            id='graph1',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
+                                            'Football', id='graph1SportsDropdown'
+                                        )
+        
+        yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
+                                        marks=None,
+                                        tooltip={"placement": "bottom", "always_visible": True},
+                                        allowCross=False,
+                                        id='graph1Slider'
+                                    )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico,
+            html.Label('Faixa de tempo'),
+            yearsSlider
+        ])
+
+        return myGraphDiv

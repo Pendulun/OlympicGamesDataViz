@@ -4,7 +4,7 @@ import sys
 sys.path.insert(1, '../')
 
 from Config import Config
-from OlympicGraphs import OlympicGRaphs
+from OlympicGraphs import OlympicGraphs
 import plotly.express as px
 import pandas as pd
 
@@ -51,7 +51,7 @@ headerDiv = html.Div(
 
 cleanedAthletesFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_ATHLETES_FILE_NAME
 cleanedRegionsFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_REGIONS_FILE_NAME
-myGraphs = OlympicGRaphs(cleanedAthletesFilePath, cleanedRegionsFilePath)
+myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath)
 
 mainBodyDiv = html.Div(children=[
                             html.Div(
@@ -70,6 +70,16 @@ mainBodyDiv = html.Div(children=[
                                             Depois, apenas aqueles que ganharam bronze. Depois prata e, por fim, ouro. Dessa forma, poderíamos ver melhor o que importa.
                                         """
                                     )
+                                ]
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Altura x Peso por medalha e esporte',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graph1(app)
                                 ]
                             )
                         ]
