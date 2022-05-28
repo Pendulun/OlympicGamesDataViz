@@ -138,3 +138,96 @@ class OlympicGraphs():
         ])
 
         return myGraphDiv
+
+
+    def graph2(self, app):
+        """
+        Esse é um gráfico com as seguintes características:
+        Eixo x: Altura
+        Eixo y: Peso
+        Filtros:
+            Dropdown: Tipo de Esporte
+            RangeSlider: Faixa de tempo
+        """
+
+        #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
+
+        def getGraphFigWith(sportType, minTime, maxTime):
+            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
+            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+            athletesWithMedalOnTimeRange = athletesWithMedal[
+                    (athletesWithMedal['Year'] >= minTime) & (athletesWithMedal['Year'] <= maxTime)
+                ]
+
+            fig = px.density_heatmap(athletesWithMedalOnTimeRange, x="Height", y="Weight", marginal_x = "histogram", marginal_y = "histogram", range_x = (140, 230), range_y = (40, 150))
+            
+            return fig
+
+        #Como recebi o app criado em app.py por parâmetro, posso adicionar callbacks a ele
+
+        @app.callback(
+            Output('graph2','figure'),
+            Input('graph2SportsDropdown','value'),
+            Input('graph2Slider','value')
+        )
+        def updateGraph2(sportType, timeRange):
+
+            fig = getGraphFigWith(sportType, timeRange[0], timeRange[1])
+
+            return fig
+        
+        @app.callback(
+                Output('graph2Slider','min'),
+                Output('graph2Slider','max'),
+                Output('graph2Slider','value'),
+                Input('graph2SportsDropdown','value')
+        )
+        def updateGraph2Slider(sportType):
+            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
+            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+            yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+            minYear = np.min(yearsOfMedalists)
+            maxYear = np.max(yearsOfMedalists)
+            value = [minYear, maxYear]
+            return minYear, maxYear, value 
+
+        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
+            
+        defaultSportType ='Football'
+        athletesOfSport = self._athletesDf[self._athletesDf['Sport']==defaultSportType]
+        athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
+        athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+
+        yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+        minYear = np.min(yearsOfMedalists)
+        maxYear = np.max(yearsOfMedalists)
+        
+        fig = getGraphFigWith(defaultSportType, minYear, maxYear)
+        grafico = dcc.Graph(
+            id='graph2',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
+                                            'Football', id='graph2SportsDropdown'
+                                        )
+        
+        yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
+                                        marks=None,
+                                        tooltip={"placement": "bottom", "always_visible": True},
+                                        allowCross=False,
+                                        id='graph2Slider'
+                                    )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico,
+            html.Label('Faixa de tempo'),
+            yearsSlider
+        ])
+
+        return myGraphDiv

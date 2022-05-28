@@ -81,6 +81,16 @@ mainBodyDiv = html.Div(children=[
                                     ),
                                     myGraphs.graph1(app)
                                 ]
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Altura x Peso por esporte',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graph2(app)
+                                ]
                             )
                         ]
                     )
