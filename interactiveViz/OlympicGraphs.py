@@ -9,6 +9,12 @@ class OlympicGraphs():
         self._athletesFilePath = athletesFilePath
         self._athletesDf = pd.read_csv(self._athletesFilePath)
 
+        # Para regular o range dos anos
+        self._athletesDf = self._athletesDf[self._athletesDf['Year'].isin(range(0,2040))]
+
+        #Commom filters
+        self._athletesWithMedals = self._athletesDf[self._athletesDf['Medal'] != 'None']
+
         self._regionsFilePath = regionsFilePath
         self._regionsDf = pd.read_csv(self._regionsFilePath)
 
@@ -17,6 +23,10 @@ class OlympicGraphs():
 
         self._yearCountryHost = yearCountryHostFilePath
         self._yearCountryHostDf = pd.read_csv(self._yearCountryHost)
+
+        #Graph3 stuff so dont make them everytime
+        self.meanMedalsRegion = 0
+        self.summerComparison = 0
 
     #Pode receber parâmetros como coisas para serem usadas em filtros
     def getGraficoExemplo(self):
@@ -59,12 +69,10 @@ class OlympicGraphs():
         #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
 
         def getGraphFigWith(sportType, minTime, maxTime):
-            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
-            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
 
-            athletesWithMedalOnTimeRange = athletesWithMedal[
-                    (athletesWithMedal['Year'] >= minTime) & (athletesWithMedal['Year'] <= maxTime)
+            athletesWithMedalOnTimeRange = athletesOfSportWithMedal[
+                    (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
                 ]
 
             fig = px.scatter(athletesWithMedalOnTimeRange, x="Height", y="Weight", hover_name="Name",
@@ -98,24 +106,20 @@ class OlympicGraphs():
                 Input('graph1SportsDropdown','value')
         )
         def updateGraph1Slider(sportType):
-            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
-            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
 
-            yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
             minYear = np.min(yearsOfMedalists)
             maxYear = np.max(yearsOfMedalists)
             value = [minYear, maxYear]
+
             return minYear, maxYear, value 
 
         #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
             
         defaultSportType ='Football'
-        athletesOfSport = self._athletesDf[self._athletesDf['Sport']==defaultSportType]
-        athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-        athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
-
-        yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
+        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
         minYear = np.min(yearsOfMedalists)
         maxYear = np.max(yearsOfMedalists)
         
@@ -159,12 +163,10 @@ class OlympicGraphs():
         #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
 
         def getGraphFigWith(sportType, minTime, maxTime):
-            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
-            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
 
-            athletesWithMedalOnTimeRange = athletesWithMedal[
-                    (athletesWithMedal['Year'] >= minTime) & (athletesWithMedal['Year'] <= maxTime)
+            athletesWithMedalOnTimeRange = athletesOfSportWithMedal[
+                    (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
                 ]
 
             fig = px.density_heatmap(athletesWithMedalOnTimeRange, x="Height", y="Weight", marginal_x = "histogram", marginal_y = "histogram", range_x = (140, 230), range_y = (40, 150))
@@ -191,11 +193,9 @@ class OlympicGraphs():
                 Input('graph2SportsDropdown','value')
         )
         def updateGraph2Slider(sportType):
-            athletesOfSport = self._athletesDf[self._athletesDf['Sport']==sportType]
-            athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-            athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
 
-            yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
             minYear = np.min(yearsOfMedalists)
             maxYear = np.max(yearsOfMedalists)
             value = [minYear, maxYear]
@@ -204,11 +204,9 @@ class OlympicGraphs():
         #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
             
         defaultSportType ='Football'
-        athletesOfSport = self._athletesDf[self._athletesDf['Sport']==defaultSportType]
-        athletesWithNoMedal = athletesOfSport['Medal'] == 'None'
-        athletesWithMedal = athletesOfSport[~athletesWithNoMedal]
+        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
 
-        yearsOfMedalists = np.sort(athletesWithMedal['Year'].unique())
+        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
         minYear = np.min(yearsOfMedalists)
         maxYear = np.max(yearsOfMedalists)
         
@@ -238,7 +236,49 @@ class OlympicGraphs():
 
         return myGraphDiv
 
-#Pode receber parâmetros como coisas para serem usadas em filtros
+
+    def graph3Aggregations(self):
+        #Separando os anos em verão em inverno, importante para não dar conflito de datas depois.
+        summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
+        winterYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Winter'].isna()]
+        
+        # Separando atletas em verão e inverno
+        summerAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Summer'])]
+        winterAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Winter'])]
+
+        #TODO Acredito que pode criar uma tabela nova
+        # Criando nova tabela, a dos atletas + o país hosteador do evento + continente do atleta + sub região do atleta
+        summerOlimpWithHostCountry = pd.merge(summerAthletes, summerYearCountry[["Year","Country"]], how = "left", on = ["Year"])
+        winterOlimpWithHostCountry = pd.merge(winterAthletes, winterYearCountry[["Year","Country"]], how = "left", on = ["Year"])
+        summerOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
+        winterOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
+        summerAthletesCompleteRegions = pd.merge(summerOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
+        winterAthletesCompleteRegions = pd.merge(winterOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
+        
+        # Selecionando apenas os medalhistas
+        summerAthletesWithMedals = summerAthletesCompleteRegions[~summerAthletesCompleteRegions['Medal'].isna()]
+        winterAthletesWithMedals = winterAthletesCompleteRegions[~winterAthletesCompleteRegions['Medal'].isna()]
+
+        #TODO ESTÁ APENAS COM VERÃO, TEM AINDA DE FAZER INVERNO
+        # Pegando apenas 1 medalhista por evento (pois em esportes com times, todos levam medalhas)
+        # Exceto esportes individuais que distribuem mais medalhas bronze
+        summerBoxJudoTaekwondoWrestling = summerAthletesWithMedals[summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
+        summerAthletesWithMedals = summerAthletesWithMedals[~summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
+        dfSummerMedalsAndRegions = summerAthletesWithMedals.drop_duplicates(subset = ["Event","Medal"],keep = "first")
+        dfSummerMedalsAndRegions = pd.concat([dfSummerMedalsAndRegions, summerBoxJudoTaekwondoWrestling], axis=0)
+
+        # Agrupando por ano e subregião
+        summerCount = dfSummerMedalsAndRegions.groupby(['Year', 'continent']).agg('count').reset_index()
+        self.meanMedalsRegion = summerCount.groupby(['continent'])['Medal'].agg('mean').reset_index()
+
+        # Calculate Percentage
+        self.meanMedalsRegion['Porcentagem da média geral de todos jogos'] = (self.meanMedalsRegion['Medal'] / 
+                            self.meanMedalsRegion['Medal'].sum()) * 100
+
+        self.summerComparison = dfSummerMedalsAndRegions.groupby(['Year'])
+
+    #Pode receber parâmetros como coisas para serem usadas em filtros
+    #graph3
     def graphMedalsByContinent(self, app):
 
         """
@@ -249,56 +289,17 @@ class OlympicGraphs():
             Dropdown: Tipo de Esporte
             RangeSlider: Faixa de tempo
         """
+        
         def getGraph(comparison_year):
             comparison_year = int(comparison_year)
-            # Para regular o range dos anos
-            self._athletesDf = self._athletesDf[self._athletesDf['Year'].isin(range(0,2040))]
-
-            # Separando os anos em verão em inverno, importante para não dar conflito de datas depois.
-            summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
-            winterYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Winter'].isna()]
             
-            # Separando atletas em verão e inverno
-            summerAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Summer'])]
-            winterAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Winter'])]
-
-            #TODO Acredito que pode criar uma tabela nova
-            # Criando nova tabela, a dos atletas + o país hosteador do evento + continente do atleta + sub região do atleta
-            summerOlimpWithHostCountry = pd.merge(summerAthletes, summerYearCountry[["Year","Country"]], how = "left", on = ["Year"])
-            winterOlimpWithHostCountry = pd.merge(winterAthletes, winterYearCountry[["Year","Country"]], how = "left", on = ["Year"])
-            summerOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
-            winterOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
-            summerAthletesCompleteRegions = pd.merge(summerOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
-            winterAthletesCompleteRegions = pd.merge(winterOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
+            currSummerComparison = self.summerComparison.get_group(comparison_year).groupby(['continent']).agg('count').reset_index()
+            currSummerComparison.rename(columns = {'Medal':'MedalComparison'}, inplace = True)
             
-            # Selecionando apenas os medalhistas
-            summerAthletesWithMedals = summerAthletesCompleteRegions[~summerAthletesCompleteRegions['Medal'].isna()]
-            winterAthletesWithMedals = winterAthletesCompleteRegions[~winterAthletesCompleteRegions['Medal'].isna()]
-
-            #TODO ESTÁ APENAS COM VERÃO, TEM AINDA DE FAZER INVERNO
-            # Pegando apenas 1 medalhista por evento (pois em esportes com times, todos levam medalhas)
-            # Exceto esportes individuais que distribuem mais medalhas bronze
-            summerBoxJudoTaekwondoWrestling = summerAthletesWithMedals[summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
-            summerAthletesWithMedals = summerAthletesWithMedals[~summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
-            dfSummerMedalsAndRegions = summerAthletesWithMedals.drop_duplicates(subset = ["Event","Medal"],keep = "first")
-            dfSummerMedalsAndRegions = pd.concat([dfSummerMedalsAndRegions, summerBoxJudoTaekwondoWrestling], axis=0)
-
-            # Agrupando por ano e subregião
-            summerCount = dfSummerMedalsAndRegions.groupby(['Year', 'continent']).agg('count').reset_index()
-            meanMedalsRegion = summerCount.groupby(['continent'])['Medal'].agg('mean').reset_index()
-
-            summerComparison = dfSummerMedalsAndRegions.groupby(['Year'])
-            summerComparison = summerComparison.get_group(comparison_year).groupby(['continent']).agg('count').reset_index()
-            summerComparison.rename(columns = {'Medal':'MedalComparison'}, inplace = True)
-
-            # Calculate Percentage
-            meanMedalsRegion['Porcentagem da média geral de todos jogos'] = (meanMedalsRegion['Medal'] / 
-                                meanMedalsRegion['Medal'].sum()) * 100
+            currSummerComparison['Porcentagem do ano escolhido para comparação'] = (currSummerComparison['MedalComparison'] / 
+                        currSummerComparison['MedalComparison'].sum()) * 100
             
-            summerComparison['Porcentagem do ano escolhido para comparação'] = (summerComparison['MedalComparison'] / 
-                        summerComparison['MedalComparison'].sum()) * 100
-            
-            comparisonGraph = pd.merge(meanMedalsRegion, summerComparison[["continent","Porcentagem do ano escolhido para comparação"]], how = "left", on = ["continent"])
+            comparisonGraph = pd.merge(self.meanMedalsRegion, currSummerComparison[["continent","Porcentagem do ano escolhido para comparação"]], how = "left", on = ["continent"])
 
             # Criando a figura
             fig = px.bar(comparisonGraph, x=["Porcentagem da média geral de todos jogos", "Porcentagem do ano escolhido para comparação"], y="continent", orientation='h', barmode = 'group', labels={
@@ -308,7 +309,6 @@ class OlympicGraphs():
                  },)
             fig.update_layout(yaxis={'categoryorder':'total ascending'})
             
-
             return fig
 
         @app.callback(
@@ -320,11 +320,9 @@ class OlympicGraphs():
 
             return fig
     
-        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
-        summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
-        summerYears = summerYearCountry['Year'].astype(str)
-        
-        
+        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima
+        self.graph3Aggregations()   
+    
         defaultComparisonYear = 2016        
         fig = getGraph(defaultComparisonYear)
 
@@ -333,14 +331,74 @@ class OlympicGraphs():
             figure=fig
         )
 
+        summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
+        summerYears = summerYearCountry['Year'].astype(str)
         yearOlympDropdown = dcc.Dropdown(summerYears, 
                                             '2016', id='yearOlympDropdown'
                                         )
 
         myGraphDiv = html.Div(children=[
             yearOlympDropdown,
-            grafico,
-            html.Label('Faixa de tempo')
+            grafico
         ])
 
+        return myGraphDiv
+
+    def graphMedalsByAge(self, app):
+        
+        def getDataOfSport(sportType:str):
+            dfOfSport = 0
+
+            if sportType == 'All':
+                dfOfSport = self._athletesWithMedals
+            else:
+                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
+            
+            atletasPorIdadeMedalha = dfOfSport.groupby(["Sex", "Age", "Medal"])
+
+            numVencedoresAgrupados = atletasPorIdadeMedalha.size().reset_index()
+            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
+            numVencedoresAgrupados['SexMedal'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+
+            return numVencedoresAgrupados
+        
+        def getGraph4Figure(data):
+            fig = px.line(data, x="Age", y="qtMedals", color="SexMedal", 
+                        color_discrete_map={ #Para cada valor diferente na coluna SexMedal, eu defino um valor para a linha
+                                "FSilver":'#eb1c1c',
+                                'FBronze':'#fa9191',
+                                'FGold':'#910101',
+                                'MSilver':'#5967eb',
+                                'MBronze': '#a5adf0',
+                                'MGold': '#030d63'
+                                },
+                        )
+            return fig
+        
+        @app.callback(
+            Output('graph4','figure'),
+            Input('graph4SportsDropdown','value'),
+        )
+        def attGraph4(sportType):
+            numVencedoresAgrupados = getDataOfSport(sportType)
+            fig = getGraph4Figure(numVencedoresAgrupados)
+            return fig
+
+        #Visualizaão padrão
+        numVencedoresAgrupados = getDataOfSport('All')
+        fig = getGraph4Figure(numVencedoresAgrupados)
+            
+        grafico = dcc.Graph(
+            id='graph4',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
+                                            'Football', id='graph4SportsDropdown'
+                                        )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico
+        ])
         return myGraphDiv
