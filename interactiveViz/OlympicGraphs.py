@@ -5,13 +5,19 @@ import numpy as np
 
 class OlympicGraphs():
 
-    def __init__(self, athletesFilePath:str, regionsFilePath:str):
+    def __init__(self, athletesFilePath:str, regionsFilePath:str, nocCountryContinentFilePath:str, yearCountryHostFilePath:str):
         self._athletesFilePath = athletesFilePath
         self._athletesDf = pd.read_csv(self._athletesFilePath)
 
         self._regionsFilePath = regionsFilePath
         self._regionsDf = pd.read_csv(self._regionsFilePath)
-    
+
+        self._nocCountryContinent = nocCountryContinentFilePath
+        self._nocCountryContinentDf = pd.read_csv(self._nocCountryContinent)
+
+        self._yearCountryHost = yearCountryHostFilePath
+        self._yearCountryHostDf = pd.read_csv(self._yearCountryHost)
+
     #Pode receber parâmetros como coisas para serem usadas em filtros
     def getGraficoExemplo(self):
         """
@@ -228,6 +234,113 @@ class OlympicGraphs():
             grafico,
             html.Label('Faixa de tempo'),
             yearsSlider
+        ])
+
+        return myGraphDiv
+
+#Pode receber parâmetros como coisas para serem usadas em filtros
+    def graphMedalsByContinent(self, app):
+
+        """
+        Esse é um gráfico com as seguintes características:
+        Eixo x: Continentes
+        Eixo y: % de medalhas
+        Filtros:
+            Dropdown: Tipo de Esporte
+            RangeSlider: Faixa de tempo
+        """
+        def getGraph(comparison_year):
+            comparison_year = int(comparison_year)
+            # Para regular o range dos anos
+            self._athletesDf = self._athletesDf[self._athletesDf['Year'].isin(range(0,2040))]
+
+            # Separando os anos em verão em inverno, importante para não dar conflito de datas depois.
+            summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
+            winterYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Winter'].isna()]
+            
+            # Separando atletas em verão e inverno
+            summerAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Summer'])]
+            winterAthletes = self._athletesDf[self._athletesDf['Season'].isin(['Winter'])]
+
+            #TODO Acredito que pode criar uma tabela nova
+            # Criando nova tabela, a dos atletas + o país hosteador do evento + continente do atleta + sub região do atleta
+            summerOlimpWithHostCountry = pd.merge(summerAthletes, summerYearCountry[["Year","Country"]], how = "left", on = ["Year"])
+            winterOlimpWithHostCountry = pd.merge(winterAthletes, winterYearCountry[["Year","Country"]], how = "left", on = ["Year"])
+            summerOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
+            winterOlimpWithHostCountry.rename(columns = {'Country':'HostCountry'}, inplace = True)
+            summerAthletesCompleteRegions = pd.merge(summerOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
+            winterAthletesCompleteRegions = pd.merge(winterOlimpWithHostCountry, self._nocCountryContinentDf[["NOC", "continent", "sub_region"]], how = "left",on = ["NOC"])
+            
+            # Selecionando apenas os medalhistas
+            summerAthletesWithMedals = summerAthletesCompleteRegions[~summerAthletesCompleteRegions['Medal'].isna()]
+            winterAthletesWithMedals = winterAthletesCompleteRegions[~winterAthletesCompleteRegions['Medal'].isna()]
+
+            #TODO ESTÁ APENAS COM VERÃO, TEM AINDA DE FAZER INVERNO
+            # Pegando apenas 1 medalhista por evento (pois em esportes com times, todos levam medalhas)
+            # Exceto esportes individuais que distribuem mais medalhas bronze
+            summerBoxJudoTaekwondoWrestling = summerAthletesWithMedals[summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
+            summerAthletesWithMedals = summerAthletesWithMedals[~summerAthletesWithMedals['Sport'].isin(['Judo', 'Taekwondo', 'Boxing', 'Wrestling'])]
+            dfSummerMedalsAndRegions = summerAthletesWithMedals.drop_duplicates(subset = ["Event","Medal"],keep = "first")
+            dfSummerMedalsAndRegions = pd.concat([dfSummerMedalsAndRegions, summerBoxJudoTaekwondoWrestling], axis=0)
+
+            # Agrupando por ano e subregião
+            summerCount = dfSummerMedalsAndRegions.groupby(['Year', 'continent']).agg('count').reset_index()
+            meanMedalsRegion = summerCount.groupby(['continent'])['Medal'].agg('mean').reset_index()
+
+            summerComparison = dfSummerMedalsAndRegions.groupby(['Year'])
+            summerComparison = summerComparison.get_group(comparison_year).groupby(['continent']).agg('count').reset_index()
+            summerComparison.rename(columns = {'Medal':'MedalComparison'}, inplace = True)
+
+            # Calculate Percentage
+            meanMedalsRegion['Porcentagem da média geral de todos jogos'] = (meanMedalsRegion['Medal'] / 
+                                meanMedalsRegion['Medal'].sum()) * 100
+            
+            summerComparison['Porcentagem do ano escolhido para comparação'] = (summerComparison['MedalComparison'] / 
+                        summerComparison['MedalComparison'].sum()) * 100
+            
+            comparisonGraph = pd.merge(meanMedalsRegion, summerComparison[["continent","Porcentagem do ano escolhido para comparação"]], how = "left", on = ["continent"])
+
+            # Criando a figura
+            fig = px.bar(comparisonGraph, x=["Porcentagem da média geral de todos jogos", "Porcentagem do ano escolhido para comparação"], y="continent", orientation='h', barmode = 'group', labels={
+                     "value": "Porcentagem de medalhas (%)",
+                     "continent": "Continente",
+                     "variable": "Variáveis"
+                 },)
+            fig.update_layout(yaxis={'categoryorder':'total ascending'})
+            
+
+            return fig
+
+        @app.callback(
+            Output('graphMedalsByContinent','figure'),
+            Input('yearOlympDropdown','value'),
+        )
+        def updateGraph1(year):
+            fig = getGraph(year)
+
+            return fig
+    
+        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
+        summerYearCountry = self._yearCountryHostDf[~self._yearCountryHostDf['Summer'].isna()]
+        summerYears = summerYearCountry['Year'].astype(str)
+        
+        
+        defaultComparisonYear = 2016        
+        fig = getGraph(defaultComparisonYear)
+
+        grafico = dcc.Graph(
+            id='graphMedalsByContinent',
+            figure=fig
+        )
+
+        yearOlympDropdown = dcc.Dropdown(summerYears, 
+                                            '2016', id='yearOlympDropdown'
+                                        )
+
+        myGraphDiv = html.Div(children=[
+            yearOlympDropdown,
+            grafico,
+            html.Label('Faixa de tempo')
         ])
 
         return myGraphDiv

@@ -51,7 +51,10 @@ headerDiv = html.Div(
 
 cleanedAthletesFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_ATHLETES_FILE_NAME
 cleanedRegionsFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_REGIONS_FILE_NAME
-myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath)
+cleanedNocCountryContinentFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+Config.CLEANED_NOC_COUNTRY_CONTINENT
+yearCountryHostFilePath = '../'+Config.ORIGINAL_DATASET_DIR_NAME+"/"+Config.YEAR_COUNTRY_HOST
+myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath,cleanedNocCountryContinentFilePath,yearCountryHostFilePath)
+
 
 mainBodyDiv = html.Div(children=[
                             html.Div(
@@ -90,6 +93,16 @@ mainBodyDiv = html.Div(children=[
                                         }
                                     ),
                                     myGraphs.graph2(app)
+                                ]
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Região x Porcentagem de Medalhas média',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graphMedalsByContinent(app)
                                 ]
                             )
                         ]
