@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 from dash import Dash, dcc, html, Input, Output
 import numpy as np
 
@@ -14,6 +15,7 @@ class OlympicGraphs():
 
         #Commom filters
         self._athletesWithMedals = self._athletesDf[self._athletesDf['Medal'] != 'None']
+        self._goldMedalAthletes = self._athletesDf[self._athletesDf["Medal"].isin(["Gold"])]
 
         self._regionsFilePath = regionsFilePath
         self._regionsDf = pd.read_csv(self._regionsFilePath)
@@ -236,6 +238,163 @@ class OlympicGraphs():
 
         return myGraphDiv
 
+    def graphMedalsByAge(self, app):
+        
+        def getDataOfSport(sportType:str):
+            dfOfSport = 0
+
+            if sportType == 'All':
+                dfOfSport = self._athletesWithMedals
+            else:
+                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
+            
+            atletasPorIdadeMedalha = dfOfSport.groupby(["Sex", "Age", "Medal"])
+
+            numVencedoresAgrupados = atletasPorIdadeMedalha.size().reset_index()
+            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
+            numVencedoresAgrupados['SexMedal'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+
+            return numVencedoresAgrupados
+        
+        def getGraph4Figure(data):
+            fig = px.line(data, x="Age", y="qtMedals", color="SexMedal", 
+                        color_discrete_map={ #Para cada valor diferente na coluna SexMedal, eu defino um valor para a linha
+                                "FSilver":'#eb1c1c',
+                                'FBronze':'#fa9191',
+                                'FGold':'#910101',
+                                'MSilver':'#5967eb',
+                                'MBronze': '#a5adf0',
+                                'MGold': '#030d63'
+                                },
+                        )
+            return fig
+        
+        @app.callback(
+            Output('graph4','figure'),
+            Input('graph4SportsDropdown','value'),
+        )
+        def attGraph4(sportType):
+            numVencedoresAgrupados = getDataOfSport(sportType)
+            fig = getGraph4Figure(numVencedoresAgrupados)
+            return fig
+
+        #Visualizaão padrão
+        numVencedoresAgrupados = getDataOfSport('All')
+        fig = getGraph4Figure(numVencedoresAgrupados)
+            
+        grafico = dcc.Graph(
+            id='graph4',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
+                                            'Football', id='graph4SportsDropdown'
+                                        )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico
+        ])
+        return myGraphDiv
+
+
+    #Pode receber parâmetros como coisas para serem usadas em filtros
+    # Graph média de medalhas ganhas por continente
+    def graphRadar(self, app):
+
+        """
+        Esse é um gráfico de radar.
+        Mostra as caracteristicas da média dos medalhistas de ouro por evento e
+        as caracteristicas do medalhista com mais medalhas de ouro (melhor atleta)
+        Filtros:
+            Dropdown: Tipo de evento
+            RangeSlider: Faixa de tempo
+        """
+        
+        def getRadarGraph(eventType):
+            goldMedalistsByEvent = self._goldMedalAthletes[self._athletesWithMedals['Event']==eventType]
+
+            # Pegando medias de todos medalhistas de ouro
+            meanWeights = goldMedalistsByEvent["Weight"].mean()
+            meanHeights = goldMedalistsByEvent["Height"].mean()
+            meanAges = goldMedalistsByEvent["Age"].mean()
+
+            # Pegando o atleta com mais medalhas de ouro
+            bestAthlete = goldMedalistsByEvent["Name"].value_counts().idxmax()
+            bestAthleteWeight = goldMedalistsByEvent[goldMedalistsByEvent["Name"].isin([bestAthlete])]["Weight"].iloc[0]
+            bestAthleteHeight = goldMedalistsByEvent[goldMedalistsByEvent["Name"].isin([bestAthlete])]["Height"].iloc[0]
+            bestAthleteAge = goldMedalistsByEvent[goldMedalistsByEvent["Name"].isin([bestAthlete])]["Age"].mean()
+
+            # Criando figura
+            categories = ['Idade','Altura','Peso','Idade',]            
+            fig = go.Figure()
+            fig.add_trace(go.Scatterpolar(
+                r=[round(bestAthleteAge,2), round(bestAthleteHeight,2), round(bestAthleteWeight,2),round(bestAthleteAge,2)],
+                theta=categories,
+                text = [round(bestAthleteAge,2), round(bestAthleteHeight,2), round(bestAthleteWeight,2)],
+                hoverinfo = "r+theta",
+                mode = "lines+markers+text",
+                textfont=dict(
+                    family="sans serif",
+                    size=12,
+                    color="RoyalBlue"
+                ),
+                textposition= ["top right", "top right", "bottom right"],
+                name='Melhor Atleta'
+            ))
+            fig.add_trace(go.Scatterpolar(
+                r=[round(meanAges,2),round(meanHeights,2),round(meanWeights,2),round(meanAges,2)],
+                theta=categories,
+                hoverinfo = "r+theta",
+                text = [round(meanAges,2),round(meanHeights,2),round(meanWeights,2)],
+                mode = "lines+markers+text",
+                textposition= ["bottom right", "top left", "bottom left"],
+                textfont=dict(
+                    family="Balto, sans-serif",
+                    size=12,
+                    color="IndianRed"
+                ),
+                name='Média de medalhistas de ouro'
+            ))
+            fig.update_layout(
+            polar=dict(
+                radialaxis_angle = -45,
+                radialaxis=dict(
+                visible=True,
+                range=[0, 250]
+                )),
+            showlegend=True
+            )
+
+            return fig
+
+        defaultEvent = "Alpine Skiing Men's Combined"
+        @app.callback(
+            Output(component_id='output_event', component_property='figure'),
+            Input(component_id='input_event', component_property='value')
+        )
+        def updateGraph1(event):
+            fig = getRadarGraph(event)
+            return fig
+
+        fig = getRadarGraph(defaultEvent)
+
+        grafico = dcc.Graph(
+            id='output_event',
+            figure=fig
+        )
+
+        myGraphDiv = html.Div([
+                    html.H6("Escolha o nome do evento"),
+                    html.Div([
+                        "Input: ",
+                        dcc.Input(id='input_event', value=defaultEvent, type="text")
+                    ]),
+                    html.Br(),
+                    grafico,
+                ])
+                
+        return myGraphDiv
 
     def graph3Aggregations(self):
         #Separando os anos em verão em inverno, importante para não dar conflito de datas depois.
@@ -278,7 +437,7 @@ class OlympicGraphs():
         self.summerComparison = dfSummerMedalsAndRegions.groupby(['Year'])
 
     #Pode receber parâmetros como coisas para serem usadas em filtros
-    #graph3
+    # Graph média de medalhas ganhas por continente
     def graphMedalsByContinent(self, app):
 
         """
@@ -342,63 +501,4 @@ class OlympicGraphs():
             grafico
         ])
 
-        return myGraphDiv
-
-    def graphMedalsByAge(self, app):
-        
-        def getDataOfSport(sportType:str):
-            dfOfSport = 0
-
-            if sportType == 'All':
-                dfOfSport = self._athletesWithMedals
-            else:
-                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
-            
-            atletasPorIdadeMedalha = dfOfSport.groupby(["Sex", "Age", "Medal"])
-
-            numVencedoresAgrupados = atletasPorIdadeMedalha.size().reset_index()
-            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
-            numVencedoresAgrupados['SexMedal'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
-
-            return numVencedoresAgrupados
-        
-        def getGraph4Figure(data):
-            fig = px.line(data, x="Age", y="qtMedals", color="SexMedal", 
-                        color_discrete_map={ #Para cada valor diferente na coluna SexMedal, eu defino um valor para a linha
-                                "FSilver":'#eb1c1c',
-                                'FBronze':'#fa9191',
-                                'FGold':'#910101',
-                                'MSilver':'#5967eb',
-                                'MBronze': '#a5adf0',
-                                'MGold': '#030d63'
-                                },
-                        )
-            return fig
-        
-        @app.callback(
-            Output('graph4','figure'),
-            Input('graph4SportsDropdown','value'),
-        )
-        def attGraph4(sportType):
-            numVencedoresAgrupados = getDataOfSport(sportType)
-            fig = getGraph4Figure(numVencedoresAgrupados)
-            return fig
-
-        #Visualizaão padrão
-        numVencedoresAgrupados = getDataOfSport('All')
-        fig = getGraph4Figure(numVencedoresAgrupados)
-            
-        grafico = dcc.Graph(
-            id='graph4',
-            figure=fig
-        )
-
-        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
-                                            'Football', id='graph4SportsDropdown'
-                                        )
-
-        myGraphDiv = html.Div(children=[
-            sportsTypeDropdown,
-            grafico
-        ])
         return myGraphDiv

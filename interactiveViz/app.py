@@ -97,6 +97,16 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
+                                    html.H4('Radar',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graphRadar(app)
+                                ]
+                            ),
+                            html.Div(
+                                [
                                     html.H4('Região x Porcentagem de Medalhas média',
                                         style={
                                             'textAlign':'center'
