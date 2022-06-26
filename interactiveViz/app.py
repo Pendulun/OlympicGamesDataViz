@@ -1,14 +1,14 @@
-from dash import Dash, html, dcc
+from dash import Dash, html
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '../')
 
 from Config import Config
 from OlympicGraphs import OlympicGraphs
-import plotly.express as px
-import pandas as pd
 
 app = Dash(__name__)
+
+server = app.server
 
 #https://coolors.co/0085c7-f4c300-009f3d-f55d3e-ffffff
 olympicsPalette = {
