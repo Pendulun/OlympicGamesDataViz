@@ -252,13 +252,13 @@ class OlympicGraphs():
 
             numVencedoresAgrupados = atletasPorIdadeMedalha.size().reset_index()
             numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
-            numVencedoresAgrupados['SexMedal'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+            numVencedoresAgrupados['medalhasPorSexo'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
 
             return numVencedoresAgrupados
         
         def getGraph4Figure(data):
-            fig = px.line(data, x="Age", y="qtMedals", color="SexMedal", 
-                        color_discrete_map={ #Para cada valor diferente na coluna SexMedal, eu defino um valor para a linha
+            fig = px.line(data, x="Age", y="qtMedals", color="medalhasPorSexo", 
+                        color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
                                 "FSilver":'#eb1c1c',
                                 'FBronze':'#fa9191',
                                 'FGold':'#910101',
@@ -266,8 +266,9 @@ class OlympicGraphs():
                                 'MBronze': '#a5adf0',
                                 'MGold': '#030d63'
                                 },
-                        )
+                        ).update_layout(xaxis={"title": "Idade em anos"}, yaxis={"title": "Quantidade de medalhas"})
             return fig
+
         
         @app.callback(
             Output('graph4','figure'),
@@ -289,6 +290,127 @@ class OlympicGraphs():
 
         sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
                                             'Football', id='graph4SportsDropdown'
+                                        )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico
+        ])
+        return myGraphDiv
+
+
+    def graphMedalsByHeight(self, app):
+        
+        def getDataOfSport(sportType:str):
+            dfOfSport = 0
+
+            if sportType == 'All':
+                dfOfSport = self._athletesWithMedals
+            else:
+                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
+            
+            atletasPorAlturaMedalha = dfOfSport.groupby(["Sex", "Height", "Medal"])
+
+            numVencedoresAgrupados = atletasPorAlturaMedalha.size().reset_index()
+            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
+            numVencedoresAgrupados['medalhasPorSexo'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+
+            return numVencedoresAgrupados
+        
+        def getGraph5Figure(data):
+            fig = px.line(data, x="Height", y="qtMedals", color="medalhasPorSexo", 
+                        color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
+                                "FSilver":'#eb1c1c',
+                                'FBronze':'#fa9191',
+                                'FGold':'#910101',
+                                'MSilver':'#5967eb',
+                                'MBronze': '#a5adf0',
+                                'MGold': '#030d63'
+                                },
+                        ).update_layout(xaxis={"title": "Altura em cm"}, yaxis={"title": "Quantidade de medalhas"})
+            return fig
+
+        
+        @app.callback(
+            Output('graph5','figure'),
+            Input('graph5SportsDropdown','value'),
+        )
+        def attGraph5(sportType):
+            numVencedoresAgrupados = getDataOfSport(sportType)
+            fig = getGraph5Figure(numVencedoresAgrupados)
+            return fig
+
+        #Visualizaão padrão
+        numVencedoresAgrupados = getDataOfSport('All')
+        fig = getGraph5Figure(numVencedoresAgrupados)
+            
+        grafico = dcc.Graph(
+            id='graph5',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
+                                            'Football', id='graph5SportsDropdown'
+                                        )
+
+        myGraphDiv = html.Div(children=[
+            sportsTypeDropdown,
+            grafico
+        ])
+        return myGraphDiv
+
+    def graphMedalsByWeight(self, app):
+        
+        def getDataOfSport(sportType:str):
+            dfOfSport = 0
+
+            if sportType == 'All':
+                dfOfSport = self._athletesWithMedals
+            else:
+                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
+            
+            atletasPorPesoMedalha = dfOfSport.groupby(["Sex", "Weight", "Medal"])
+
+            numVencedoresAgrupados = atletasPorPesoMedalha.size().reset_index()
+            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
+            numVencedoresAgrupados['medalhasPorSexo'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+
+            return numVencedoresAgrupados
+        
+        def getGraph6Figure(data):
+            fig = px.line(data, x="Weight", y="qtMedals", color="medalhasPorSexo", 
+                        color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
+                                "FSilver":'#eb1c1c',
+                                'FBronze':'#fa9191',
+                                'FGold':'#910101',
+                                'MSilver':'#5967eb',
+                                'MBronze': '#a5adf0',
+                                'MGold': '#030d63'
+                                },
+                        ).update_layout(xaxis={"title": "Peso em kg"}, yaxis={"title": "Quantidade de medalhas"})
+            return fig
+
+        
+        @app.callback(
+            Output('graph6','figure'),
+            Input('graph6SportsDropdown','value'),
+        )
+        def attGraph6(sportType):
+            numVencedoresAgrupados = getDataOfSport(sportType)
+            fig = getGraph6Figure(numVencedoresAgrupados)
+            return fig
+
+        #Visualizaão padrão
+        numVencedoresAgrupados = getDataOfSport('All')
+        fig = getGraph6Figure(numVencedoresAgrupados)
+            
+        grafico = dcc.Graph(
+            id='graph6',
+            figure=fig
+        )
+
+        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
+                                            'Football', id='graph6SportsDropdown'
                                         )
 
         myGraphDiv = html.Div(children=[

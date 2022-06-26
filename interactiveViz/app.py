@@ -124,6 +124,26 @@ mainBodyDiv = html.Div(children=[
                                     ),
                                     myGraphs.graphMedalsByAge(app)
                                 ]
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Medalhas por altura',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graphMedalsByHeight(app)
+                                ]
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Medalhas por peso',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graphMedalsByWeight(app)
+                                ]
                             )
                         ]
                     )
