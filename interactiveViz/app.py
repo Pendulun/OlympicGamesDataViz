@@ -59,24 +59,6 @@ myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath,cleaned
 mainBodyDiv = html.Div(children=[
                             html.Div(
                                 [
-                                    html.H4('Altura x Peso',
-                                        style={
-                                        'textAlign': 'center'}
-                                    ),
-                                    myGraphs.getGraficoExemplo(),
-                                    html.P(
-                                        """
-                                            Esse gráfico tem alguns problemas ainda. O principal é que, se um mesmo atleta ganhou várias medalhas, 
-                                            os seus pontos ficarão um em cima do outro e, ao passar o mouse, pode não fazer muito sentido o que é 
-                                            mostrado como informação do ponto. Entretanto, já serve de base de fluxo de desenvolvimento do gráfico no código.
-                                            Além disso, pode ser interessante plotar em partes, por exemplo, primeiro apenas só aqueles que não ganharam medalhas.
-                                            Depois, apenas aqueles que ganharam bronze. Depois prata e, por fim, ouro. Dessa forma, poderíamos ver melhor o que importa.
-                                        """
-                                    )
-                                ]
-                            ),
-                            html.Div(
-                                [
                                     html.H4('Altura x Peso por medalha e esporte',
                                         style={
                                             'textAlign':'center'
