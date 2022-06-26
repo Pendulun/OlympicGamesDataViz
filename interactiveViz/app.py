@@ -89,16 +89,6 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Região x Porcentagem de Medalhas média',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.graphMedalsByContinent(app)
-                                ]
-                            ),
-                            html.Div(
-                                [
                                     html.H4('Medalhas por Atributo Físico',
                                         style={
                                             'textAlign':'center'
