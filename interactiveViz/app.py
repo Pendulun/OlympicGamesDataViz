@@ -79,7 +79,7 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Radar',
+                                    html.H4('Melhores características por evento',
                                         style={
                                             'textAlign':'center'
                                         }

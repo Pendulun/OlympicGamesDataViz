@@ -325,8 +325,8 @@ class OlympicGraphs():
                 hoverinfo = "r+theta",
                 mode = "lines+markers+text",
                 textfont=dict(
-                    family="sans serif",
-                    size=12,
+                    family="Balto, sans-serif",
+                    size=13,
                     color="RoyalBlue"
                 ),
                 textposition= ["top right", "top right", "bottom right"],
@@ -341,17 +341,24 @@ class OlympicGraphs():
                 textposition= ["bottom right", "top left", "bottom left"],
                 textfont=dict(
                     family="Balto, sans-serif",
-                    size=12,
+                    size=13,
                     color="IndianRed"
                 ),
                 name='Média de medalhistas de ouro'
             ))
+            
+            # Adicionando anotação do melhor atleta
+            fig.add_annotation(text="Melhor atleta: " + bestAthlete,
+                                xref="paper", yref="paper",
+                                x=0.5, y=1.2, showarrow=False)
+
             fig.update_layout(
             polar=dict(
                 radialaxis_angle = -45,
                 radialaxis=dict(
                 visible=True,
-                range=[0, 250]
+                range=[0, 250],
+                tickfont = dict(size = 10),
                 )),
             showlegend=True
             )
@@ -359,12 +366,34 @@ class OlympicGraphs():
             return fig
 
         defaultEvent = "Alpine Skiing Men's Combined"
+        defaultSport = "Alpine Skiing"
+        dfSportEvent = self._athletesDf[['Sport', 'Event']].copy()
+        
+        # Sports dropdown
+        @app.callback(
+            Output(component_id='dropdownEvent', component_property='options'),
+            Input(component_id='dropdownSport', component_property='value'),
+        )
+        def updateSports(sportsDropdown):
+            EventAux = dfSportEvent[dfSportEvent["Sport"].isin([sportsDropdown])]
+            return [{'label': i, 'value': i} for i in sorted(EventAux.Event.unique())]
+
+        # Event dropdown
+        @app.callback(
+            Output('dropdownEvent','value'),
+            Input('dropdownEvent', 'options')
+        )
+        def set_eventDropdown_value(options):
+            #print(options)
+            return options[0]['value']
+
+        # Update graph
         @app.callback(
             Output(component_id='output_event', component_property='figure'),
-            Input(component_id='input_event', component_property='value')
+            Input(component_id='dropdownEvent', component_property='value'),
         )
-        def updateGraph1(event):
-            fig = getRadarGraph(event)
+        def updateGraph1(eventDropdown):
+            fig = getRadarGraph(eventDropdown)
             return fig
 
         fig = getRadarGraph(defaultEvent)
@@ -375,10 +404,11 @@ class OlympicGraphs():
         )
 
         myGraphDiv = html.Div([
-                    html.H6("Escolha o nome do evento"),
                     html.Div([
-                        "Input: ",
-                        dcc.Input(id='input_event', value=defaultEvent, type="text")
+                        "Selecione o esporte:",
+                        dcc.Dropdown(self._athletesDf['Sport'].sort_values().unique(), value=defaultSport, id = "dropdownSport"),
+                        "Selecione o evento:",
+                        dcc.Dropdown(id = "dropdownEvent", options=[],multi=False)
                     ]),
                     html.Br(),
                     grafico,
