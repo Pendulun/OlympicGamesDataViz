@@ -316,12 +316,12 @@ class OlympicGraphs():
             bestAthleteAge = goldMedalistsByEvent[goldMedalistsByEvent["Name"].isin([bestAthlete])]["Age"].mean()
 
             # Criando figura
-            categories = ['Idade','Altura','Peso','Idade',]            
+            categories = ['Idade','Altura','Peso','Idade']            
             fig = go.Figure()
             fig.add_trace(go.Scatterpolar(
                 r=[round(bestAthleteAge,2), round(bestAthleteHeight,2), round(bestAthleteWeight,2),round(bestAthleteAge,2)],
                 theta=categories,
-                text = [round(bestAthleteAge,2), round(bestAthleteHeight,2), round(bestAthleteWeight,2)],
+                text = [round(bestAthleteAge,2), round(bestAthleteHeight,2), round(bestAthleteWeight,2),round(bestAthleteAge,2)],
                 hoverinfo = "r+theta",
                 mode = "lines+markers+text",
                 textfont=dict(
@@ -329,16 +329,16 @@ class OlympicGraphs():
                     size=13,
                     color="RoyalBlue"
                 ),
-                textposition= ["top right", "top right", "bottom right"],
+                textposition= ["top right", "top right", "bottom right","top right"],
                 name='Melhor Atleta'
             ))
             fig.add_trace(go.Scatterpolar(
                 r=[round(meanAges,2),round(meanHeights,2),round(meanWeights,2),round(meanAges,2)],
                 theta=categories,
                 hoverinfo = "r+theta",
-                text = [round(meanAges,2),round(meanHeights,2),round(meanWeights,2)],
+                text = [round(meanAges,2),round(meanHeights,2),round(meanWeights,2),round(meanAges,2)],
                 mode = "lines+markers+text",
-                textposition= ["bottom right", "top left", "bottom left"],
+                textposition= ["bottom right", "top left", "bottom left","bottom right"],
                 textfont=dict(
                     family="Balto, sans-serif",
                     size=13,
@@ -363,6 +363,7 @@ class OlympicGraphs():
             showlegend=True
             )
 
+            fig.update_traces()
             return fig
 
         defaultEvent = "Alpine Skiing Men's Combined"
