@@ -37,7 +37,7 @@ headerDiv = html.Div(
                     }   
                 ),
                 html.P(
-                    children="Uma análise dos físicos dos atletas (ou algo do tipo)",
+                    children= "Comparações entre os físicos e desempenhos dos atletas",
                     style={
                         'textAlign': 'center',
                         'color': olympicsPalette['black']
@@ -55,76 +55,80 @@ cleanedNocCountryContinentFilePath = '../'+Config.CLEANED_DATASET_DIR_NAME+"/"+C
 yearCountryHostFilePath = '../'+Config.ORIGINAL_DATASET_DIR_NAME+"/"+Config.YEAR_COUNTRY_HOST
 myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath,cleanedNocCountryContinentFilePath,yearCountryHostFilePath)
 
+#Deve ser chamado antes de tudo
+common_filters = myGraphs.myDropdownAndSlider(app)
 
-mainBodyDiv = html.Div(children=[
-                            html.Div(
-                                [
-                                    html.H3('Altura x Peso por medalha e esporte',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.myDropdownAndSlider(app),
-                                    myGraphs.graph1(app)
-                                ]
-                            ),
-                            html.Div(
-                                [
-                                    html.H3('Altura x Peso por esporte',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.graph2(app)
-                                ]
-                            ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.H3('Esportes Coletivos e Individuais',
-                                                style={
-                                                    'textAlign':'center'
-                                                }
-                                            ),
-                                            myGraphs.graph_pequenos_multiplos(app)
-                                        ]
-                                    )
-                                ]
-                            ),
-                            html.Div(
-                                [
-                                    html.H3('Melhores características por evento',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.graphRadar(app)
-                                ]
-                            ),
-                            html.Div(
-                                [
-                                    html.H3('Você é atleta?',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.graphAreYouAthlete(app)
-                                ]
-                            ),
-                            html.Div(
-                                [
-                                    html.H3('Medalhas por Atributo Físico',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
-                                    myGraphs.graphMedalsByPhisicalAttribute(app)
-                                ]
-                            )
-                        ],
-                        style= {"width": '70vw', 'margin': 'auto'}
-                    )
+firstTwoColumnsGraphs = html.Div(
+    [
+        html.Div(
+            [
+                myGraphs.medalsPerWeightAndHeight(app)
+            ],
+            style = {"width":'50vw'}
+        ),
+        html.Div(
+            [
+                myGraphs.weightAndHeightDist(app)
+            ],
+            style = {"width":'50vw'}
+        )   
+    ],
+    style = {'display':'flex', "width": '95vw', 'margin': 'auto'}
+)
+    
+
+mainBodyDiv = html.Div(
+    [
+        html.Br(),
+        common_filters,
+        html.Div(
+            [
+                html.H3('Medalhas por Atributo Físico',
+                    style={
+                        'textAlign':'center'
+                    }
+                ),
+                myGraphs.graphMedalsByPhisicalAttribute(app)
+            ]
+        ),
+        html.Br(),
+        firstTwoColumnsGraphs,
+        html.Br(),
+        html.Hr(style={'width':'70vw'}),
+        html.Div(
+            [
+                html.H3('Esportes Coletivos e Individuais',
+                            style={'textAlign':'center'}
+                        ),
+                myGraphs.graph_pequenos_multiplos(app)
+            ]
+        ),
+        html.Br(),
+        html.Hr(style={'width':'70vw'}),
+        html.Div(
+            [
+                html.H3('Melhores características por evento',
+                    style={
+                        'textAlign':'center'
+                    }
+                ),
+                myGraphs.graphRadar(app)
+            ]
+        ),
+        html.Div(
+            [
+                html.H3('Você é atleta?',
+                    style={
+                        'textAlign':'center'
+                    }
+                ),
+                myGraphs.graphAreYouAthlete(app)
+            ]
+        ),
+        html.Br()
+    ],
+    style = {'backgroundColor': olympicsPalette['bege']}
+)
 
 app.layout = html.Div(
     children=[
