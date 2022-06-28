@@ -79,21 +79,16 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Esportes Coletivos e Individuais',
-                                        style={
-                                            'textAlign':'center'
-                                        }
-                                    ),
                                     html.Div(
                                         [
-                                        html.H4('Esportes Coletivos'),
-                                        myGraphs.graph_pequenos_multiplos_col(app)
-                                        ]),
-                                    html.Div(
-                                        [
-                                        html.H4('Esportes Individuais'),
-                                        myGraphs.graph_pequenos_multiplos_ind(app)
-                                        ])
+                                            html.H4('Esportes Coletivos e Individuais',
+                                                style={
+                                                    'textAlign':'center'
+                                                }
+                                            ),
+                                            myGraphs.graph_pequenos_multiplos(app)
+                                        ]
+                                    )
                                 ]
                             ),
                             html.Div(

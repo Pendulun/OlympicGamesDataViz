@@ -220,65 +220,45 @@ class OlympicGraphs():
         ])
 
         return myGraphDiv
-
-    def graph_pequenos_multiplos_col(self, app):
-        dfAtt = self._athletesWithMedals.copy()
-        dfAtt['Categoria'] = ""
+    
+    def graph_pequenos_multiplos(self, app):
         
-        for index in dfAtt.index:
-            if dfAtt.loc[index, 'Sport'] == 'Football' or dfAtt.loc[index, 'Sport'] == 'Basketball' or dfAtt.loc[index, 'Sport'] == 'Beach Voleyball' or dfAtt.loc[index, 'Sport'] == 'Rowing' or dfAtt.loc[index, 'Sport'] == 'Handball' or dfAtt.loc[index, 'Sport'] == 'Hockey' or dfAtt.loc[index, 'Sport'] == 'Ice Hockey' or dfAtt.loc[index, 'Sport'] == 'Lacrosse' or dfAtt.loc[index, 'Sport'] == 'Rugby' or dfAtt.loc[index, 'Sport'] == 'Voleyball' or dfAtt.loc[index, 'Sport'] == 'Softball' or dfAtt.loc[index, 'Sport'] == 'Badminton' or dfAtt.loc[index, 'Sport'] == 'Bobsleigh' or dfAtt.loc[index, 'Sport'] == 'Cricket' or dfAtt.loc[index, 'Sport'] == 'Curling' or dfAtt.loc[index, 'Sport'] == 'Sailing' or dfAtt.loc[index, 'Sport'] == 'Water Polo':
-                dfAtt.loc[index,'Categoria'] = 'Coletivo'
-            elif dfAtt.loc[index, 'Sport'] == 'Alpine Skiing' or dfAtt.loc[index, 'Sport'] == 'Alpinism' or dfAtt.loc[index, 'Sport'] == 'Archery' or dfAtt.loc[index, 'Sport'] == 'Athletics' or dfAtt.loc[index, 'Sport'] == 'Biathlon' or dfAtt.loc[index, 'Sport'] == 'Boxing' or dfAtt.loc[index, 'Sport'] == 'Canoeing' or dfAtt.loc[index, 'Sport'] == 'Cross Country Skiing' or dfAtt.loc[index, 'Sport'] == 'Cycling' or dfAtt.loc[index, 'Sport'] == 'Diving' or dfAtt.loc[index, 'Sport'] == 'Equestrianism' or dfAtt.loc[index, 'Sport'] == 'Fencing' or dfAtt.loc[index, 'Sport'] == 'Figure Skating' or dfAtt.loc[index, 'Sport'] == 'Golf' or dfAtt.loc[index, 'Sport'] == 'Gymnastics' or dfAtt.loc[index, 'Sport'] == 'Judo' or dfAtt.loc[index, 'Sport'] == 'Modern Pentathlon' or dfAtt.loc[index, 'Sport'] == 'Rhythmic Gymnastics' or dfAtt.loc[index, 'Sport'] == 'Shooting' or dfAtt.loc[index, 'Sport'] == 'Ski Jumping' or dfAtt.loc[index, 'Sport'] == 'Snowboarding' or dfAtt.loc[index, 'Sport'] == 'Speed Skating' or dfAtt.loc[index, 'Sport'] == 'Swimming' or dfAtt.loc[index, 'Sport'] == 'Synchronized Swimming' or dfAtt.loc[index, 'Sport'] == 'Table Tennis' or dfAtt.loc[index, 'Sport'] == 'Taekwondo' or dfAtt.loc[index, 'Sport'] == 'Tennis' or dfAtt.loc[index, 'Sport'] == 'Trampolining' or dfAtt.loc[index, 'Sport'] == 'Triathlon' or dfAtt.loc[index, 'Sport'] == 'Weightlifting' or dfAtt.loc[index, 'Sport'] == 'Wrestling':       
-                dfAtt.loc[index, 'Categoria'] = 'Individual'
-            else:
-                dfAtt.loc[index, 'Categoria'] = ''
+        collectiveSports = [
+            'Football', 'Basketball', 'Beach Voleyball', 'Rowing', 'Handball', 'Hockey',
+            'Ice Hockey', 'Lacrosse', 'Rugby', 'Voleyball', 'Softball', 'Badminton',
+            'Bobsleigh', 'Cricket', 'Curling', 'Sailing', 'Water Polo'
+        ]
 
-        for index in dfAtt.index:
-            if dfAtt.loc[index,'Categoria'] != 'Coletivo':
-                dfAtt.drop(index, axis=0, inplace = True)
+        individualSports = [
+            'Alpine Skiing', 'Alpinism', 'Archery', 'Athletics', 'Biathlon', 'Boxing',
+            'Canoeing', 'Cross Country Skiing', 'Cycling', 'Diving', 'Equestrianism',
+            'Fencing', 'Figure Skating', 'Golf', 'Gymnastics', 'Judo', 'Modern Pentathlon',
+            'Rhythmic Gymnastics', 'Shooting', 'Ski Jumping', 'Snowboarding', 'Speed Skating',
+            'Swimming', 'Synchronized Swimming', 'Table Tennis', 'Taekwondo', 'Tennis',
+            'Trampolining', 'Triathlon', 'Weightlifting', 'Wrestling'
+        ]
 
-        fig = px.density_heatmap(dfAtt, x="Height", y="Weight", facet_row = 'Categoria')
-        #fig = px.density_heatmap(dfAtt, x="Height", y="Weight", histnorm = 'probability density')
+        collectiveData = self._athletesWithMedals[self._athletesWithMedals['Sport'].isin(collectiveSports)]
+        individualData = self._athletesWithMedals[self._athletesWithMedals['Sport'].isin(individualSports)]
 
+        figCollective = px.density_heatmap(collectiveData, x="Height", y="Weight")
+        figIndividual = px.density_heatmap(individualData, x="Height", y="Weight")
 
-        graficoMult = dcc.Graph(
+        graficoMultCol = dcc.Graph(
             id='graphMultCol',
-            figure=fig
+            figure=figCollective
         )
-
-        myGraphDiv = html.Div(children=[
-            graficoMult
-        ])
-
-        return myGraphDiv
-
-    def graph_pequenos_multiplos_ind(self, app):
-        dfAtt = self._athletesWithMedals.copy()
-        dfAtt['Categoria'] = ""
         
-        for index in dfAtt.index:
-            if dfAtt.loc[index, 'Sport'] == 'Football' or dfAtt.loc[index, 'Sport'] == 'Basketball' or dfAtt.loc[index, 'Sport'] == 'Beach Voleyball' or dfAtt.loc[index, 'Sport'] == 'Rowing' or dfAtt.loc[index, 'Sport'] == 'Handball' or dfAtt.loc[index, 'Sport'] == 'Hockey' or dfAtt.loc[index, 'Sport'] == 'Ice Hockey' or dfAtt.loc[index, 'Sport'] == 'Lacrosse' or dfAtt.loc[index, 'Sport'] == 'Rugby' or dfAtt.loc[index, 'Sport'] == 'Voleyball' or dfAtt.loc[index, 'Sport'] == 'Softball' or dfAtt.loc[index, 'Sport'] == 'Badminton' or dfAtt.loc[index, 'Sport'] == 'Bobsleigh' or dfAtt.loc[index, 'Sport'] == 'Cricket' or dfAtt.loc[index, 'Sport'] == 'Curling' or dfAtt.loc[index, 'Sport'] == 'Sailing' or dfAtt.loc[index, 'Sport'] == 'Water Polo':
-                dfAtt.loc[index,'Categoria'] = 'Coletivo'
-            elif dfAtt.loc[index, 'Sport'] == 'Alpine Skiing' or dfAtt.loc[index, 'Sport'] == 'Alpinism' or dfAtt.loc[index, 'Sport'] == 'Archery' or dfAtt.loc[index, 'Sport'] == 'Athletics' or dfAtt.loc[index, 'Sport'] == 'Biathlon' or dfAtt.loc[index, 'Sport'] == 'Boxing' or dfAtt.loc[index, 'Sport'] == 'Canoeing' or dfAtt.loc[index, 'Sport'] == 'Cross Country Skiing' or dfAtt.loc[index, 'Sport'] == 'Cycling' or dfAtt.loc[index, 'Sport'] == 'Diving' or dfAtt.loc[index, 'Sport'] == 'Equestrianism' or dfAtt.loc[index, 'Sport'] == 'Fencing' or dfAtt.loc[index, 'Sport'] == 'Figure Skating' or dfAtt.loc[index, 'Sport'] == 'Golf' or dfAtt.loc[index, 'Sport'] == 'Gymnastics' or dfAtt.loc[index, 'Sport'] == 'Judo' or dfAtt.loc[index, 'Sport'] == 'Modern Pentathlon' or dfAtt.loc[index, 'Sport'] == 'Rhythmic Gymnastics' or dfAtt.loc[index, 'Sport'] == 'Shooting' or dfAtt.loc[index, 'Sport'] == 'Ski Jumping' or dfAtt.loc[index, 'Sport'] == 'Snowboarding' or dfAtt.loc[index, 'Sport'] == 'Speed Skating' or dfAtt.loc[index, 'Sport'] == 'Swimming' or dfAtt.loc[index, 'Sport'] == 'Synchronized Swimming' or dfAtt.loc[index, 'Sport'] == 'Table Tennis' or dfAtt.loc[index, 'Sport'] == 'Taekwondo' or dfAtt.loc[index, 'Sport'] == 'Tennis' or dfAtt.loc[index, 'Sport'] == 'Trampolining' or dfAtt.loc[index, 'Sport'] == 'Triathlon' or dfAtt.loc[index, 'Sport'] == 'Weightlifting' or dfAtt.loc[index, 'Sport'] == 'Wrestling':       
-                dfAtt.loc[index, 'Categoria'] = 'Individual'
-            else:
-                dfAtt.loc[index, 'Categoria'] = ''
-
-        for index in dfAtt.index:
-            if dfAtt.loc[index,'Categoria'] != 'Individual':
-                dfAtt.drop(index, axis=0, inplace = True)
-
-        fig = px.density_heatmap(dfAtt, x="Height", y="Weight", facet_row = 'Categoria')
-        #fig = px.density_heatmap(dfAtt, x="Height", y="Weight", histnorm = 'probability density')
-
-
-        graficoMult = dcc.Graph(
+        graficoMultInd = dcc.Graph(
             id='graphMultInd',
-            figure=fig
+            figure=figIndividual
         )
 
         myGraphDiv = html.Div(children=[
-            graficoMult
+            html.H4('Esportes Coletivos', style={'textAlign':'center'}),
+            graficoMultCol,
+            html.H4('Esportes Individuais', style={'textAlign':'center'}),
+            graficoMultInd
         ])
 
         return myGraphDiv
