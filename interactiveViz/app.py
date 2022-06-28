@@ -59,7 +59,7 @@ myGraphs = OlympicGraphs(cleanedAthletesFilePath, cleanedRegionsFilePath,cleaned
 mainBodyDiv = html.Div(children=[
                             html.Div(
                                 [
-                                    html.H4('Altura x Peso por medalha e esporte',
+                                    html.H3('Altura x Peso por medalha e esporte',
                                         style={
                                             'textAlign':'center'
                                         }
@@ -70,7 +70,7 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Altura x Peso por esporte',
+                                    html.H3('Altura x Peso por esporte',
                                         style={
                                             'textAlign':'center'
                                         }
@@ -82,7 +82,7 @@ mainBodyDiv = html.Div(children=[
                                 [
                                     html.Div(
                                         [
-                                            html.H4('Esportes Coletivos e Individuais',
+                                            html.H3('Esportes Coletivos e Individuais',
                                                 style={
                                                     'textAlign':'center'
                                                 }
@@ -94,7 +94,7 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Melhores características por evento',
+                                    html.H3('Melhores características por evento',
                                         style={
                                             'textAlign':'center'
                                         }
@@ -104,7 +104,7 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Você é atleta?',
+                                    html.H3('Você é atleta?',
                                         style={
                                             'textAlign':'center'
                                         }
@@ -114,7 +114,7 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
-                                    html.H4('Medalhas por Atributo Físico',
+                                    html.H3('Medalhas por Atributo Físico',
                                         style={
                                             'textAlign':'center'
                                         }

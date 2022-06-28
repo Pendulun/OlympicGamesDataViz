@@ -60,7 +60,8 @@ class OlympicGraphs():
                     (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
                 ]
 
-            fig = px.scatter(athletesWithMedalOnTimeRange, x="Height", y="Weight", hover_name="Name",
+            fig = px.scatter(athletesWithMedalOnTimeRange, x="Height", y="Weight",
+                                range_x = (127, 230), range_y = (25, 190), hover_name="Name",
                                 color='Medal',
                                 #Para cada valor diferente na coluna Medal, eu defino uma cor hex para a bolinha
                                 color_discrete_map={ 
@@ -68,6 +69,7 @@ class OlympicGraphs():
                                     'Gold':'#f5dd05',
                                     'Silver':'#98c5f5'
                                     })
+            fig.update_layout(xaxis={"title": 'Altura (cm)'}, yaxis={"title": "Peso (Kg)"})
             
             return fig
 
@@ -178,7 +180,10 @@ class OlympicGraphs():
                     (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
                 ]
 
-            fig = px.density_heatmap(athletesWithMedalOnTimeRange, x="Height", y="Weight", marginal_x = "histogram", marginal_y = "histogram", range_x = (140, 230), range_y = (40, 150))
+            fig = px.density_heatmap(athletesWithMedalOnTimeRange, x="Height", y="Weight", marginal_x = "histogram", marginal_y = "histogram",
+                                        range_x = (127, 230), range_y = (25, 214))
+            
+            fig.update_layout(xaxis={"title": "Altura (cm)"}, yaxis={"title": "Peso (kg)"})
             
             return fig
 
@@ -265,8 +270,11 @@ class OlympicGraphs():
         collectiveData = self._athletesWithMedals[self._athletesWithMedals['Sport'].isin(collectiveSports)]
         individualData = self._athletesWithMedals[self._athletesWithMedals['Sport'].isin(individualSports)]
 
-        figCollective = px.density_heatmap(collectiveData, x="Height", y="Weight")
-        figIndividual = px.density_heatmap(individualData, x="Height", y="Weight")
+        figCollective = px.density_heatmap(collectiveData, x="Height", y="Weight", range_x = (127, 230), range_y = (25, 214))
+        figIndividual = px.density_heatmap(individualData, x="Height", y="Weight", range_x = (127, 230), range_y = (25, 214))
+
+        figCollective.update_layout(xaxis={"title": "Altura (cm)"}, yaxis={"title": "Peso (kg)"})
+        figIndividual.update_layout(xaxis={"title": "Altura (cm)"}, yaxis={"title": "Peso (kg)"})
 
         graficoMultCol = dcc.Graph(
             id='graphMultCol',
@@ -305,7 +313,15 @@ class OlympicGraphs():
 
             return numVencedoresAgrupados
         
-        def getGraphPhisicalAttributeFigure(data, atributo, title_axis_x, titulo):
+        def getGraphPhisicalAttributeFigure(data, atributo, title_axis_x):
+            x_range = ()
+            if atributo == "Age":
+                x_range = (10, 75)
+            elif atributo == 'Height':
+                x_range = (127, 230)
+            else:
+                x_range = (25, 190)
+
             fig = px.line(data, x=atributo, y="qtMedals", color="medalhasPorSexo", 
                         color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
                                 "FSilver":'#eb1c1c',
@@ -315,7 +331,8 @@ class OlympicGraphs():
                                 'MBronze': '#a5adf0',
                                 'MGold': '#030d63'
                                 },
-                        ).update_layout(xaxis={"title": title_axis_x}, yaxis={"title": "Quantidade de medalhas"}, title_text=titulo, title_x=0.5,
+                                range_x = x_range
+                        ).update_layout(xaxis={"title": title_axis_x}, yaxis={"title": "Medalhas"}, title_x=0.5,
                   title_font_size=15)
             return fig
 
@@ -330,18 +347,18 @@ class OlympicGraphs():
             numVencedoresAgrupadosIdade = getDataOfSport(sportType, "Age")
             numVencedoresAgrupadosAltura = getDataOfSport(sportType, "Height")
             numVencedoresAgrupadosPeso = getDataOfSport(sportType, "Weight")
-            figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade em anos", "Qtde de medalhas por idade")
-            figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura em cm", "Qtde de medalhas por altura")
-            figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso em kg", "Qtde de medalhas por peso")
+            figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
+            figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
+            figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
             return figAge, figHeight, figWeight
 
         #Visualizaão padrão
         numVencedoresAgrupadosIdade = getDataOfSport('All', "Age")
         numVencedoresAgrupadosAltura = getDataOfSport('All', "Height")
         numVencedoresAgrupadosPeso = getDataOfSport('All', "Weight")
-        figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade em anos", "Qtde de medalhas por idade")
-        figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura em cm", "Qtde de medalhas por altura")
-        figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso em kg", "Qtde de medalhas por peso")
+        figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
+        figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
+        figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
             
         graficoIdade = dcc.Graph(
             id='graph4',
