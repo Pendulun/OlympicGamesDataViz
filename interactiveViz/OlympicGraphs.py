@@ -114,6 +114,33 @@ class OlympicGraphs():
             figure=fig
         )
 
+        # sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
+        #                                     'Football', id='graph1SportsDropdown'
+        #                                 )
+        
+        # yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
+        #                                 marks=None,
+        #                                 tooltip={"placement": "bottom", "always_visible": True},
+        #                                 allowCross=False,
+        #                                 id='graph1Slider'
+        #                             )
+
+        myGraphDiv = html.Div(children=[
+            #sportsTypeDropdown,
+            grafico,
+            html.Label('Faixa de tempo'),
+            # yearsSlider
+        ])
+
+        return myGraphDiv
+    
+    def myDropdownAndSlider(self, app):
+        defaultSportType ='Football'
+        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
+        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
+        minYear = np.min(yearsOfMedalists)
+        maxYear = np.max(yearsOfMedalists)
+
         sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
                                             'Football', id='graph1SportsDropdown'
                                         )
@@ -125,14 +152,11 @@ class OlympicGraphs():
                                         id='graph1Slider'
                                     )
 
-        myGraphDiv = html.Div(children=[
+        return html.Div(children=[
             sportsTypeDropdown,
-            grafico,
-            html.Label('Faixa de tempo'),
+            html.Br(),  
             yearsSlider
         ])
-
-        return myGraphDiv
 
 
     def graph2(self, app):

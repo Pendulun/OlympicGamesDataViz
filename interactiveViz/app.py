@@ -64,6 +64,7 @@ mainBodyDiv = html.Div(children=[
                                             'textAlign':'center'
                                         }
                                     ),
+                                    myGraphs.myDropdownAndSlider(app),
                                     myGraphs.graph1(app)
                                 ]
                             ),
@@ -121,7 +122,8 @@ mainBodyDiv = html.Div(children=[
                                     myGraphs.graphMedalsByPhisicalAttribute(app)
                                 ]
                             )
-                        ]
+                        ],
+                        style= {"width": '70vw', 'margin': 'auto'}
                     )
 
 app.layout = html.Div(
