@@ -89,6 +89,16 @@ mainBodyDiv = html.Div(children=[
                             ),
                             html.Div(
                                 [
+                                    html.H4('Você é atleta?',
+                                        style={
+                                            'textAlign':'center'
+                                        }
+                                    ),
+                                    myGraphs.graphAreYouAthlete(app)
+                                ]
+                            ),
+                            html.Div(
+                                [
                                     html.H4('Medalhas por Atributo Físico',
                                         style={
                                             'textAlign':'center'

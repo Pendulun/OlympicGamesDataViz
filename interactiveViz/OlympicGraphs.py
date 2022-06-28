@@ -3,6 +3,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from dash import Dash, dcc, html, Input, Output
 import numpy as np
+import math
 
 class OlympicGraphs():
 
@@ -25,6 +26,20 @@ class OlympicGraphs():
 
         self._yearCountryHost = yearCountryHostFilePath
         self._yearCountryHostDf = pd.read_csv(self._yearCountryHost)
+
+        # Criando tabela com médias das características por evento
+        eventosUnicos = sorted(self._athletesDf ["Event"].unique())
+        data = []
+        for evento in eventosUnicos:
+            goldAthlete = self._goldMedalAthletes[self._goldMedalAthletes["Event"].isin([evento])]
+            avgWeight = goldAthlete["Weight"].mean()
+            avgHeight = goldAthlete["Height"].mean()
+            avgAge = goldAthlete["Age"].mean()
+            if math.isnan(avgWeight) or math.isnan(avgHeight):
+                pass
+            else:
+                data.append([evento,avgHeight,avgWeight,avgAge])
+        self._avgPerEvent = pd.DataFrame(data, columns=['Event', 'Height', 'Weight', 'Age'])
 
     def graph1(self, app):
         """
@@ -410,6 +425,137 @@ class OlympicGraphs():
                         dcc.Dropdown(self._athletesDf['Sport'].sort_values().unique(), value=defaultSport, id = "dropdownSport"),
                         "Selecione o evento:",
                         dcc.Dropdown(id = "dropdownEvent", options=[],multi=False)
+                    ]),
+                    html.Br(),
+                    grafico,
+                ])
+                
+        return myGraphDiv
+
+    # Voce tem porte de atleta?
+    def graphAreYouAthlete(self, app):
+
+        """
+        Esse é um gráfico de radar.
+        Mostra as caracteristicas da média dos medalhistas de ouro por evento e
+        as caracteristicas do medalhista com mais medalhas de ouro (melhor atleta)
+        Filtros:
+            Dropdown: Tipo de evento
+            RangeSlider: Faixa de tempo
+        """
+        
+        def getGraphAreYouAthlete(idade,altura,peso):
+            avgPerEventAux = self._avgPerEvent.copy()
+            eventoAtual = self._avgPerEvent.copy()
+            idade = float(idade)
+            altura = float(altura)
+            peso = float(peso)
+            for i in range(100,10,-1):
+                x = i/10
+                # Dropando por altura
+                indexNames = avgPerEventAux[ (avgPerEventAux['Height'] >= altura+x) | (avgPerEventAux['Height'] <= altura - x) ].index
+                avgPerEventAux.drop(indexNames , inplace=True)
+
+                # Dropando por peso
+                indexNames = avgPerEventAux[ (avgPerEventAux['Weight'] >= peso+x) | (avgPerEventAux['Weight'] <= peso - x) ].index
+                avgPerEventAux.drop(indexNames , inplace=True)
+
+                # Dropando por idade
+                indexNames = avgPerEventAux[ (avgPerEventAux['Age'] >= idade+5) | (avgPerEventAux['Age'] <= idade - 5) ].index
+                avgPerEventAux.drop(indexNames , inplace=True)
+
+                if len(avgPerEventAux) == 0:
+                    break
+                else:
+                    eventoAtual = avgPerEventAux.copy()
+
+            row = eventoAtual.iloc[0]
+            evento = row.Event
+            meanAges = row.Age
+            meanHeights = row.Height
+            meanWeights = row.Weight
+
+            # Criando figura
+            categories = ['Idade','Altura','Peso','Idade']            
+            fig = go.Figure()
+            fig.add_trace(go.Scatterpolar(
+                r=[round(idade,2), round(altura,2), round(peso,2),round(idade,2)],
+                theta=categories,
+                text = [round(idade,2), round(altura,2), round(peso,2),round(idade,2)],
+                hoverinfo = "r+theta",
+                mode = "lines+markers+text",
+                textfont=dict(
+                    family="Balto, sans-serif",
+                    size=13,
+                    color="RoyalBlue"
+                ),
+                textposition= ["top right", "top right", "bottom right","top right"],
+                name='Seus dados'
+            ))
+            fig.add_trace(go.Scatterpolar(
+                r=[round(meanAges,2),round(meanHeights,2),round(meanWeights,2),round(meanAges,2)],
+                theta=categories,
+                hoverinfo = "r+theta",
+                text = [round(meanAges,2),round(meanHeights,2),round(meanWeights,2),round(meanAges,2)],
+                mode = "lines+markers+text",
+                textposition= ["bottom right", "top left", "bottom left","bottom right"],
+                textfont=dict(
+                    family="Balto, sans-serif",
+                    size=13,
+                    color="IndianRed"
+                ),
+                name='Média de medalhistas de ouro'
+            ))
+            
+            # Adicionando anotação do melhor atleta
+            fig.add_annotation(text="Evento: " + evento,
+                                xref="paper", yref="paper",
+                                x=0.5, y=1.2, showarrow=False)
+
+            fig.update_layout(
+            polar=dict(
+                radialaxis_angle = -45,
+                radialaxis=dict(
+                visible=True,
+                range=[0, 250],
+                tickfont = dict(size = 10),
+                )),
+            showlegend=True
+            )
+
+            fig.update_traces()
+            return fig
+
+        defaultEvent = "Alpine Skiing Men's Combined"
+        defaultSport = "Alpine Skiing"
+        dfSportEvent = self._athletesDf[['Sport', 'Event']].copy()
+        
+        # Sports dropdown
+        @app.callback(
+            Output(component_id='output_AreYouAthlete', component_property='figure'),
+            Input(component_id='Altura', component_property='value'),
+            Input(component_id='Idade', component_property='value'),
+            Input(component_id='Peso', component_property='value'),
+        )
+        def updateGraph(altura,idade,peso):
+            fig = getGraphAreYouAthlete(idade,altura,peso)
+            return fig       
+
+        fig = getGraphAreYouAthlete(22,190,90)
+
+        grafico = dcc.Graph(
+            id='output_AreYouAthlete',
+            figure=fig
+        )
+
+        myGraphDiv = html.Div([
+                    html.Div([
+                        "Altura:",
+                        dcc.Input(id='Altura',value='190',type='text'),
+                        "Idade:",
+                        dcc.Input(id='Idade',value='22',type='text'),
+                        "Peso",
+                        dcc.Input(id='Peso',value='90',type='text')
                     ]),
                     html.Br(),
                     grafico,
