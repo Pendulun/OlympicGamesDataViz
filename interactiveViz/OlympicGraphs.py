@@ -467,10 +467,11 @@ class OlympicGraphs():
                 range=[0, 250],
                 tickfont = dict(size = 10),
                 )),
-            showlegend=True
+            showlegend=True,
+            #paper_bgcolor = "#E8E9EB"
             )
 
-            fig.update_traces()
+            fig.update_polars(bgcolor='#CCCDC6')            
             return fig
 
         defaultEvent = "Alpine Skiing Men's Combined"
@@ -614,10 +615,11 @@ class OlympicGraphs():
                 range=[0, 250],
                 tickfont = dict(size = 10),
                 )),
+            #paper_bgcolor = "#E8E9EB",
             showlegend=True
             )
 
-            fig.update_traces()
+            fig.update_polars(bgcolor='#CCCDC6')
             return fig
 
         defaultEvent = "Alpine Skiing Men's Combined"
