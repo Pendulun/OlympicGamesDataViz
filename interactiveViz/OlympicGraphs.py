@@ -7,6 +7,10 @@ import math
 
 class OlympicGraphs():
 
+    DEFAULT_SPORT_FOR_DROPDOWN_FILTER = "All"
+    DEFAULT_MIN_YEAR_LIMIT = 1896
+    DEFAULT_MAX_YEAR_LIMIT = 2016
+
     def __init__(self, athletesFilePath:str, regionsFilePath:str, nocCountryContinentFilePath:str, yearCountryHostFilePath:str):
         self._athletesFilePath = athletesFilePath
         self._athletesDf = pd.read_csv(self._athletesFilePath)
@@ -40,8 +44,147 @@ class OlympicGraphs():
             else:
                 data.append([evento,avgHeight,avgWeight,avgAge])
         self._avgPerEvent = pd.DataFrame(data, columns=['Event', 'Height', 'Weight', 'Age'])
+    
+    def myDropdownAndSlider(self, app):
 
-    def graph1(self, app):
+        def getMinMaxValueForSport(sportType):
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
+            if len(yearsOfMedalists) > 0:
+                minYear = np.min(yearsOfMedalists)
+                maxYear = np.max(yearsOfMedalists)
+            else:
+                minYear = OlympicGraphs.DEFAULT_MIN_YEAR_LIMIT
+                maxYear = OlympicGraphs.DEFAULT_MAX_YEAR_LIMIT
+            
+            value = [minYear, maxYear]
+
+            return minYear, maxYear, value
+
+        @app.callback(
+                Output('TimeSlider','min'),
+                Output('TimeSlider','max'),
+                Output('TimeSlider','value'),
+                Input('SportsDropdown','value')
+        )
+        def updateTimeSlider(sportType):
+            return getMinMaxValueForSport(sportType)
+        
+
+        minYear, maxYear, dropDownCurrValue = getMinMaxValueForSport(OlympicGraphs.DEFAULT_SPORT_FOR_DROPDOWN_FILTER)
+
+        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
+                                            OlympicGraphs.DEFAULT_SPORT_FOR_DROPDOWN_FILTER, id='SportsDropdown'
+                                        )
+        
+        yearsSlider = dcc.RangeSlider(minYear, maxYear, value=dropDownCurrValue,
+                                        marks=None,
+                                        tooltip={"placement": "bottom", "always_visible": True},
+                                        allowCross=False,
+                                        id='TimeSlider'
+                                    )
+
+        return html.Div(children=[
+            sportsTypeDropdown,
+            html.Br(),  
+            yearsSlider
+        ],
+        style = {'width':'70vw','margin':'auto'})
+    
+    def graphMedalsByPhisicalAttribute(self, app):
+        
+        def getDataOfSport(sportType:str, atributo, limInfTempo, limMaxTempo):
+            dfOfSport = 0
+
+            if sportType == 'All':
+                dfOfSport = self._athletesWithMedals
+            else:
+                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
+            
+            dfOfSport = dfOfSport[(dfOfSport['Year'] >= limInfTempo) & (dfOfSport['Year'] <= limMaxTempo)]
+            
+            atletasPorAtributoMedalha = dfOfSport.groupby(["Sex", atributo, "Medal"])
+
+            numVencedoresAgrupados = atletasPorAtributoMedalha.size().reset_index()
+            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
+            numVencedoresAgrupados['medalhasPorSexo'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
+
+            return numVencedoresAgrupados
+        
+        def getGraphPhisicalAttributeFigure(data, atributo, title_axis_x):
+            x_range = ()
+            if atributo == "Age":
+                x_range = (10, 75)
+            elif atributo == 'Height':
+                x_range = (127, 230)
+            else:
+                x_range = (25, 190)
+
+            fig = px.line(data, x=atributo, y="qtMedals", color="medalhasPorSexo", 
+                        color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
+                                "FSilver":'#eb1c1c',
+                                'FBronze':'#fa9191',
+                                'FGold':'#910101',
+                                'MSilver':'#5967eb',
+                                'MBronze': '#a5adf0',
+                                'MGold': '#030d63'
+                                },
+                                range_x = x_range
+                        ).update_layout(xaxis={"title": title_axis_x}, yaxis={"title": "Medalhas"}, title_x=0.5,
+                            title_font_size=15)
+            return fig
+
+        
+        @app.callback(
+            Output('graph4','figure'),
+            Output('graph5','figure'),
+            Output('graph6','figure'),
+            Input('SportsDropdown','value'),
+            Input('TimeSlider','value')
+        )
+        def attGraph4(sportType, timeRange):
+            numVencedoresAgrupadosIdade = getDataOfSport(sportType, "Age", timeRange[0], timeRange[1])
+            numVencedoresAgrupadosAltura = getDataOfSport(sportType, "Height", timeRange[0], timeRange[1])
+            numVencedoresAgrupadosPeso = getDataOfSport(sportType, "Weight", timeRange[0], timeRange[1])
+            figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
+            figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
+            figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
+            return figAge, figHeight, figWeight
+
+        #Visualizaão padrão
+        default_sport = OlympicGraphs.DEFAULT_SPORT_FOR_DROPDOWN_FILTER
+        default_min_year = OlympicGraphs.DEFAULT_MIN_YEAR_LIMIT
+        default_max_year = OlympicGraphs.DEFAULT_MAX_YEAR_LIMIT
+        numVencedoresAgrupadosIdade = getDataOfSport(default_sport, "Age", default_min_year, default_max_year)
+        numVencedoresAgrupadosAltura = getDataOfSport(default_sport, "Height", default_min_year, default_max_year)
+        numVencedoresAgrupadosPeso = getDataOfSport(default_sport, "Weight", default_min_year, default_max_year)
+        figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
+        figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
+        figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
+            
+        graficoIdade = dcc.Graph(
+            id='graph4',
+            figure=figAge
+        )
+        graficoAltura = dcc.Graph(
+            id='graph5',
+            figure=figHeight
+        )
+        graficoPeso = dcc.Graph(
+            id='graph6',
+            figure=figWeight
+        )
+
+        myGraphDiv = html.Div(children=[
+                                graficoAltura,
+                                graficoPeso,
+                                graficoIdade
+                            ],
+                            style = {'width':'80vw','margin':'auto'}
+                        )
+        return myGraphDiv
+
+    def medalsPerWeightAndHeight(self, app):
         """
         Esse é um gráfico com as seguintes características:
         Eixo x: Altura
@@ -54,7 +197,11 @@ class OlympicGraphs():
         #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
 
         def getGraphFigWith(sportType, minTime, maxTime):
-            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+
+            if sportType == "All":
+                athletesOfSportWithMedal = self._athletesWithMedals
+            else:
+                athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
 
             athletesWithMedalOnTimeRange = athletesOfSportWithMedal[
                     (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
@@ -69,46 +216,44 @@ class OlympicGraphs():
                                     'Gold':'#f5dd05',
                                     'Silver':'#98c5f5'
                                     })
-            fig.update_layout(xaxis={"title": 'Altura (cm)'}, yaxis={"title": "Peso (Kg)"})
+            fig.update_layout(xaxis={"title": 'Altura (cm)'}, yaxis={"title": "Peso (Kg)"},
+                                title={
+                                    'text': 'Altura x Peso por medalha e esporte', 'xanchor': 'center', 'x':0.5}
+                            )
             
             return fig
+        
+        def getMinMaxValueForSport(sportType):
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
+            if len(yearsOfMedalists) > 0:
+                minYear = np.min(yearsOfMedalists)
+                maxYear = np.max(yearsOfMedalists)
+            else:
+                minYear = 1896
+                maxYear = 2016
+            
+            value = [minYear, maxYear]
+
+            return minYear, maxYear, value
 
         #Como recebi o app criado em app.py por parâmetro, posso adicionar callbacks a ele
 
         @app.callback(
             Output('graph1','figure'),
-            Input('graph1SportsDropdown','value'),
-            Input('graph1Slider','value')
+            Input('SportsDropdown','value'),
+            Input('TimeSlider','value')
         )
         def updateGraph1(sportType, timeRange):
 
             fig = getGraphFigWith(sportType, timeRange[0], timeRange[1])
 
             return fig
-        
-        @app.callback(
-                Output('graph1Slider','min'),
-                Output('graph1Slider','max'),
-                Output('graph1Slider','value'),
-                Input('graph1SportsDropdown','value')
-        )
-        def updateGraph1Slider(sportType):
-
-            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
-            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
-            minYear = np.min(yearsOfMedalists)
-            maxYear = np.max(yearsOfMedalists)
-            value = [minYear, maxYear]
-
-            return minYear, maxYear, value 
 
         #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
             
-        defaultSportType ='Football'
-        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
-        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
-        minYear = np.min(yearsOfMedalists)
-        maxYear = np.max(yearsOfMedalists)
+        defaultSportType = OlympicGraphs.DEFAULT_SPORT_FOR_DROPDOWN_FILTER
+        minYear, maxYear, dropDownCurrValue = getMinMaxValueForSport(defaultSportType)
         
         fig = getGraphFigWith(defaultSportType, minYear, maxYear)
         grafico = dcc.Graph(
@@ -116,52 +261,13 @@ class OlympicGraphs():
             figure=fig
         )
 
-        # sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
-        #                                     'Football', id='graph1SportsDropdown'
-        #                                 )
-        
-        # yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
-        #                                 marks=None,
-        #                                 tooltip={"placement": "bottom", "always_visible": True},
-        #                                 allowCross=False,
-        #                                 id='graph1Slider'
-        #                             )
-
         myGraphDiv = html.Div(children=[
-            #sportsTypeDropdown,
-            grafico,
-            html.Label('Faixa de tempo'),
-            # yearsSlider
+            grafico
         ])
 
         return myGraphDiv
-    
-    def myDropdownAndSlider(self, app):
-        defaultSportType ='Football'
-        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
-        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
-        minYear = np.min(yearsOfMedalists)
-        maxYear = np.max(yearsOfMedalists)
 
-        sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
-                                            'Football', id='graph1SportsDropdown'
-                                        )
-        
-        yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
-                                        marks=None,
-                                        tooltip={"placement": "bottom", "always_visible": True},
-                                        allowCross=False,
-                                        id='graph1Slider'
-                                    )
-
-        return html.Div(children=[
-            sportsTypeDropdown,
-            html.Br(),  
-            yearsSlider
-        ])
-
-
-    def graph2(self, app):
+    def weightAndHeightDist(self, app):
         """
         Esse é um gráfico com as seguintes características:
         Eixo x: Altura
@@ -171,10 +277,11 @@ class OlympicGraphs():
             RangeSlider: Faixa de tempo
         """
 
-        #Essas são funções aninhadas dentro da função graph1. São funções de utilidade ou de callback
-
         def getGraphFigWith(sportType, minTime, maxTime):
-            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+            if sportType == "All":
+                athletesOfSportWithMedal = self._athletesWithMedals
+            else:
+                athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
 
             athletesWithMedalOnTimeRange = athletesOfSportWithMedal[
                     (athletesOfSportWithMedal['Year'] >= minTime) & (athletesOfSportWithMedal['Year'] <= maxTime)
@@ -183,46 +290,40 @@ class OlympicGraphs():
             fig = px.density_heatmap(athletesWithMedalOnTimeRange, x="Height", y="Weight", marginal_x = "histogram", marginal_y = "histogram",
                                         range_x = (127, 230), range_y = (25, 214))
             
-            fig.update_layout(xaxis={"title": "Altura (cm)"}, yaxis={"title": "Peso (kg)"})
+            fig.update_layout(xaxis={"title": "Altura (cm)"}, yaxis={"title": "Peso (kg)"}, 
+                                        title={'text': 'Altura x Peso por esporte', 'xanchor': 'center', 'x':0.5})
             
             return fig
+        
+        def getMinMaxValueForSport(sportType):
+            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
+            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
+            if len(yearsOfMedalists) > 0:
+                minYear = np.min(yearsOfMedalists)
+                maxYear = np.max(yearsOfMedalists)
+            else:
+                minYear = 1896
+                maxYear = 2016
+            
+            value = [minYear, maxYear]
+
+            return minYear, maxYear, value
 
         #Como recebi o app criado em app.py por parâmetro, posso adicionar callbacks a ele
 
         @app.callback(
             Output('graph2','figure'),
-            Input('graph2SportsDropdown','value'),
-            Input('graph2Slider','value')
+            Input('SportsDropdown','value'),
+            Input('TimeSlider','value')
         )
         def updateGraph2(sportType, timeRange):
 
             fig = getGraphFigWith(sportType, timeRange[0], timeRange[1])
 
             return fig
-        
-        @app.callback(
-                Output('graph2Slider','min'),
-                Output('graph2Slider','max'),
-                Output('graph2Slider','value'),
-                Input('graph2SportsDropdown','value')
-        )
-        def updateGraph2Slider(sportType):
-            athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==sportType]
-
-            yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
-            minYear = np.min(yearsOfMedalists)
-            maxYear = np.max(yearsOfMedalists)
-            value = [minYear, maxYear]
-            return minYear, maxYear, value 
-
-        #Aqui começa o display default do gráfico. Ele será alterado de acordo com os callbacks definidos acima    
             
-        defaultSportType ='Football'
-        athletesOfSportWithMedal = self._athletesWithMedals[self._athletesWithMedals['Sport']==defaultSportType]
-
-        yearsOfMedalists = np.sort(athletesOfSportWithMedal['Year'].unique())
-        minYear = np.min(yearsOfMedalists)
-        maxYear = np.max(yearsOfMedalists)
+        defaultSportType = OlympicGraphs.DEFAULT_SPORT_FOR_DROPDOWN_FILTER
+        minYear, maxYear, dropDownCurrValue = getMinMaxValueForSport(defaultSportType)
         
         fig = getGraphFigWith(defaultSportType, minYear, maxYear)
         grafico = dcc.Graph(
@@ -230,22 +331,8 @@ class OlympicGraphs():
             figure=fig
         )
 
-        sportsTypeDropdown = dcc.Dropdown(np.sort(self._athletesDf['Sport'].unique()), 
-                                            'Football', id='graph2SportsDropdown'
-                                        )
-        
-        yearsSlider = dcc.RangeSlider(minYear, maxYear, value=[minYear, maxYear],
-                                        marks=None,
-                                        tooltip={"placement": "bottom", "always_visible": True},
-                                        allowCross=False,
-                                        id='graph2Slider'
-                                    )
-
         myGraphDiv = html.Div(children=[
-            sportsTypeDropdown,
             grafico,
-            html.Label('Faixa de tempo'),
-            yearsSlider
         ])
 
         return myGraphDiv
@@ -286,105 +373,27 @@ class OlympicGraphs():
             figure=figIndividual
         )
 
-        myGraphDiv = html.Div(children=[
-            html.H4('Esportes Coletivos', style={'textAlign':'center'}),
-            graficoMultCol,
-            html.H4('Esportes Individuais', style={'textAlign':'center'}),
-            graficoMultInd
-        ])
+        myGraphDiv = html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.H4('Esportes Coletivos', style={'textAlign':'center'}),
+                                    graficoMultCol
+                                ],
+                                style = {"width":'50vw'}
+                            ),
+                            html.Div(
+                                [
+                                    html.H4('Esportes Individuais', style={'textAlign':'center'}),
+                                    graficoMultInd
+                                ],
+                                style = {"width":'50vw'}
+                            )   
+                        ],
+                        style = {'display':'flex', "width": '95vw', 'margin': 'auto'}
+                    )
 
         return myGraphDiv
-
-    def graphMedalsByPhisicalAttribute(self, app):
-        
-        def getDataOfSport(sportType:str, atributo):
-            dfOfSport = 0
-
-            if sportType == 'All':
-                dfOfSport = self._athletesWithMedals
-            else:
-                dfOfSport = self._athletesWithMedals[self._athletesWithMedals['Sport'] == sportType]
-            
-            atletasPorAtributoMedalha = dfOfSport.groupby(["Sex", atributo, "Medal"])
-
-            numVencedoresAgrupados = atletasPorAtributoMedalha.size().reset_index()
-            numVencedoresAgrupados.rename(columns={0:'qtMedals'}, inplace=True)
-            numVencedoresAgrupados['medalhasPorSexo'] = numVencedoresAgrupados['Sex'] + numVencedoresAgrupados['Medal']
-
-            return numVencedoresAgrupados
-        
-        def getGraphPhisicalAttributeFigure(data, atributo, title_axis_x):
-            x_range = ()
-            if atributo == "Age":
-                x_range = (10, 75)
-            elif atributo == 'Height':
-                x_range = (127, 230)
-            else:
-                x_range = (25, 190)
-
-            fig = px.line(data, x=atributo, y="qtMedals", color="medalhasPorSexo", 
-                        color_discrete_map={ #Para cada valor diferente na coluna medalhasPorSexo, eu defino um valor para a linha
-                                "FSilver":'#eb1c1c',
-                                'FBronze':'#fa9191',
-                                'FGold':'#910101',
-                                'MSilver':'#5967eb',
-                                'MBronze': '#a5adf0',
-                                'MGold': '#030d63'
-                                },
-                                range_x = x_range
-                        ).update_layout(xaxis={"title": title_axis_x}, yaxis={"title": "Medalhas"}, title_x=0.5,
-                  title_font_size=15)
-            return fig
-
-        
-        @app.callback(
-            Output('graph4','figure'),
-            Output('graph5','figure'),
-            Output('graph6','figure'),
-            Input('graphsPhiAttrportsDropdown','value'),
-        )
-        def attGraph4(sportType):
-            numVencedoresAgrupadosIdade = getDataOfSport(sportType, "Age")
-            numVencedoresAgrupadosAltura = getDataOfSport(sportType, "Height")
-            numVencedoresAgrupadosPeso = getDataOfSport(sportType, "Weight")
-            figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
-            figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
-            figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
-            return figAge, figHeight, figWeight
-
-        #Visualizaão padrão
-        numVencedoresAgrupadosIdade = getDataOfSport('All', "Age")
-        numVencedoresAgrupadosAltura = getDataOfSport('All', "Height")
-        numVencedoresAgrupadosPeso = getDataOfSport('All', "Weight")
-        figAge = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosIdade, "Age", "Idade (ano)")
-        figHeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosAltura, "Height", "Altura (cm)")
-        figWeight = getGraphPhisicalAttributeFigure(numVencedoresAgrupadosPeso, "Weight", "Peso (Kg)")
-            
-        graficoIdade = dcc.Graph(
-            id='graph4',
-            figure=figAge
-        )
-        graficoAltura = dcc.Graph(
-            id='graph5',
-            figure=figHeight
-        )
-        graficoPeso = dcc.Graph(
-            id='graph6',
-            figure=figWeight
-        )
-
-        sportsTypeDropdown = dcc.Dropdown(np.append(['All'], np.sort(self._athletesDf['Sport'].unique())), 
-                                            'Football', id='graphsPhiAttrportsDropdown'
-                                        )
-
-        myGraphDiv = html.Div(children=[
-            sportsTypeDropdown,
-            graficoIdade,
-            graficoAltura, 
-            graficoPeso
-        ])
-        return myGraphDiv
-
 
     #Pode receber parâmetros como coisas para serem usadas em filtros
     # Graph média de medalhas ganhas por continente
@@ -508,10 +517,12 @@ class OlympicGraphs():
                         dcc.Dropdown(self._athletesDf['Sport'].sort_values().unique(), value=defaultSport, id = "dropdownSport"),
                         "Selecione o evento:",
                         dcc.Dropdown(id = "dropdownEvent", options=[],multi=False)
-                    ]),
+                    ],
+                    style = {'width':'70vw', 'margin':'auto'}),
                     html.Br(),
                     grafico,
-                ])
+                ],
+                style = {'width':'80vw', 'margin':'auto'})
                 
         return myGraphDiv
 
@@ -633,15 +644,17 @@ class OlympicGraphs():
 
         myGraphDiv = html.Div([
                     html.Div([
-                        "Altura:",
+                        "Altura (cm): ",
                         dcc.Input(id='Altura',value='190',type='text'),
-                        "Idade:",
+                        " Idade (anos): ",
                         dcc.Input(id='Idade',value='22',type='text'),
-                        "Peso",
+                        " Peso (kg): ",
                         dcc.Input(id='Peso',value='90',type='text')
-                    ]),
+                    ],
+                    style={'width':'70vw', 'margin':'auto', 'text-align':'center'}),
                     html.Br(),
                     grafico,
-                ])
+                ],
+                style = {'width':'80vw', 'margin':'auto'})
                 
         return myGraphDiv
